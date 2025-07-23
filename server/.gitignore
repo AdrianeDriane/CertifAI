@@ -1,0 +1,14 @@
+# Build artifacts (if compiling TypeScript)
+dist/
+
+# Environment variables
+.env
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+
+# MongoDB dumps 
+dump/
