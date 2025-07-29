@@ -1,11 +1,18 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import dotenv from "dotenv";
 import connectDB from "./config/db";
 import apiRoutes from "./routes/api";
+import session from "express-session";
+import passport from "passport";
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/authRoutes";
+import "./config/passport";
 
-dotenv.config();
+
 
 const app = express();
 app.use(express.json());
@@ -13,13 +20,26 @@ app.use(
   cors({
     origin: process.env.CLIENT_URL, 
     methods: ["GET", "POST", "PUT", "DELETE"], 
-    allowedHeaders: ["Content-Type", "Authorization"], 
+    allowedHeaders: ["Content-Type", "Authorization", "x-device-fingerprint"], 
     credentials: true, 
   })
 );
 app.use(helmet());
 
+app.use(cookieParser());
+app.use(
+  session({
+    secret: process.env.JWT_SECRET!,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use("/api", apiRoutes);
+app.use("/api/auth", authRoutes);
 
 const PORT = process.env.PORT;
 connectDB()

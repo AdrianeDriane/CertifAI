@@ -23,9 +23,7 @@ export const createUser = async (req: Request, res: Response) => {
     const newUser = new User({
       email,
       password,
-      firstName,
-      lastName,
-      middleName
+      fullName: `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`,
     });
 
     await newUser.save();
@@ -35,9 +33,7 @@ export const createUser = async (req: Request, res: Response) => {
       user: {
         _id: newUser._id,
         email: newUser.email,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        middleName: newUser.middleName
+        fullName: newUser.fullName,
       }
     });
   } catch (error: any) {
