@@ -11,17 +11,10 @@ const DocEditor = () => {
   const editorRef = useRef<DocumentEditorContainerComponent>(null);
   const [fileName, setFileName] = useState('Untitled');
 
-  const onSave = async () => {
+  const onSave = () => {
     const editorObj = editorRef.current?.documentEditor;
     if (editorObj) {
-      const blob = await editorObj.saveAsBlob('Docx');
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${fileName.trim() || 'Untitled'}.docx`;
-      a.click();
-      URL.revokeObjectURL(url);
+      editorObj.save(fileName.trim() || 'Untitled', 'Docx');
     }
   };
 
@@ -45,7 +38,7 @@ const DocEditor = () => {
       <DocumentEditorContainerComponent
         id="container"
         ref={editorRef}
-        height={'100%'}
+        height="100%"
         serviceUrl="https://services.syncfusion.com/react/production/api/documenteditor/"
         enableToolbar={true}
       />
