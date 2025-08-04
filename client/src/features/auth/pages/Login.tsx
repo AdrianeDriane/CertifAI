@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type JSX } from 'react';
 import InputField from '../../../components/InputField';
 import Button from '../../../components/Button';
 import Form from '../components/Form';

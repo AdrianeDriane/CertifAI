@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type JSX } from 'react';
 import { Link } from 'react-router-dom';
 import InputField from '../../../components/InputField';
 import Button from '../../../components/Button';
