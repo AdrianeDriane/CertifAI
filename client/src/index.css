@@ -1,3 +1,32 @@
+/* TODO: UNSUREBUT WE MIGHT BE USING THE WRONG TAILWIND VERSION, WE SHOULD USE LATEST */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Theme customization using @theme */
+@theme {
+  /* Colors */
+  --color-primary-light: #00bcff;
+  --color-primary: #00a6f4;
+  --color-primary-dark: #0082c8;
+  --color-custom-black: #030712;
+  --color-custom-gray: #ebecec;
+
+  /* Fonts */
+  /* TODO: ADD PERSONALIZED FONTS */
+}
+
+/* Refer to below on how we can use default fonts for automated fonts */
+/* @layer base {
+  html {
+    font-family: var(--font-sora, 'Sora', sans-serif);
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-manrope, 'Manrope', sans-serif);
+  }
+} */

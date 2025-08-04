@@ -1,7 +1,7 @@
 import React, { useState, type JSX } from 'react';
 import { Link } from 'react-router-dom';
 import InputField from '../../../components/InputField';
-import Button from '../../../components/Button';
+import { Button } from '../../../components/Button';
 import Form from '../components/Form';
 
 type RegisterForm = {
@@ -111,13 +111,23 @@ export default function Register(): JSX.Element {
             required
           />
 
-          <Button type="submit" className="w-full mt-4" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full"
+            disabled={isSubmitting}
+            showArrow={!isSubmitting}
+          >
             {isSubmitting ? 'Registering...' : 'Sign Up Securely'}
           </Button>
 
           <p className="text-center text-sm text-gray-600 mt-2">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:underline font-medium">
+            <Link
+              to="/login"
+              className="text-blue-600 hover:underline font-medium"
+            >
               Log in here
             </Link>
           </p>
@@ -132,7 +142,8 @@ export default function Register(): JSX.Element {
           and{' '}
           <a href="#" className="text-blue-600 hover:underline">
             Privacy Policy
-          </a>.
+          </a>
+          .
         </footer>
       </div>
     </div>
