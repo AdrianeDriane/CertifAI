@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^4.6.2",
+    "@syncfusion/ej2-react-documenteditor": "^30.1.42",
     "axios": "^1.11.0",
     "lucide-react": "^0.536.0",
     "react": "^19.1.0",
