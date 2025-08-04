@@ -1,5 +1,5 @@
 import '../../App.css';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   DocumentEditorContainerComponent,
   Toolbar,
@@ -9,6 +9,7 @@ DocumentEditorContainerComponent.Inject(Toolbar);
 
 const DocEditor = () => {
   const editorRef = useRef<DocumentEditorContainerComponent>(null);
+  const [fileName, setFileName] = useState('Untitled');
 
   const onSave = async () => {
     const editorObj = editorRef.current?.documentEditor;
@@ -18,7 +19,7 @@ const DocEditor = () => {
 
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'document.docx';
+      a.download = `${fileName.trim() || 'Untitled'}.docx`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -27,7 +28,13 @@ const DocEditor = () => {
   return (
     <div className="h-screen w-full">
       <div className="p-4 bg-gray-200 flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Certifai Document Editor</h2>
+        <input
+          type="text"
+          value={fileName}
+          onChange={(e) => setFileName(e.target.value)}
+          placeholder="Enter file name"
+          className="border px-2 py-1 rounded w-1/3 font-semibold"
+        />
         <button
           onClick={onSave}
           className="bg-blue-600 text-white px-4 py-2 rounded"
