@@ -14,26 +14,37 @@ export function useAuthActions() {
   const navigate = useNavigate();
   const { setToken } = useAuth();
 
-  const handleRegister = async (email: string, password: string) => {
+  const handleRegister = async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    middleName?: string
+  ) => {
     setIsLoading(true);
     setError('');
     setMessage('');
-    
+
     try {
       const fingerprint = await getFingerprint();
       const res = await axios.post(`${API_BASE}/auth/register`, {
         email,
         password,
         fingerprint,
+        firstName,
+        lastName,
+        middleName,
       });
-      
+
       setToken(res.data.token);
       setMessage('Registration successful!');
-      
-      navigate('/verify-email', { 
-        state: { email },
-        replace: true 
-      });
+
+      navigate('/home', { replace: true });
+      // TODO: Use this when implementing email verification
+      // navigate('/verify-email', {
+      //   state: { email },
+      //   replace: true,
+      // });
     } catch (err: unknown) {
       const error = err as AxiosError<{ message?: string }>;
       setError(error.response?.data?.message || 'Registration failed.');
@@ -46,7 +57,7 @@ export function useAuthActions() {
     setIsLoading(true);
     setError('');
     setMessage('');
-    
+
     try {
       const fingerprint = await getFingerprint();
       const res = await axios.post(`${API_BASE}/auth/login`, {
@@ -54,17 +65,17 @@ export function useAuthActions() {
         password,
         fingerprint,
       });
-      
+
       setToken(res.data.token);
       setMessage('Login successful!');
-      navigate('/dashboard', { replace: true });
+      navigate('/home', { replace: true });
     } catch (err: unknown) {
       const error = err as AxiosError<{ message?: string }>;
       setError(error.response?.data?.message || 'Login failed.');
-      if(error.response?.status === 403){
-        navigate('/verify-email', {state: {email} });
-      }
-
+      // TODO: Use this when adding Email Verification
+      // if (error.response?.status === 403) {
+      //   navigate('/verify-email', { state: { email } });
+      // }
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +84,7 @@ export function useAuthActions() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError('');
-    
+
     try {
       const fingerprint = await getFingerprint();
       window.location.href = `${API_BASE}/auth/google?fp=${fingerprint}`;

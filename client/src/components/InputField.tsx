@@ -10,6 +10,7 @@ type InputFieldProps = {
   required?: boolean;
 };
 
+// TODO: Refactor this component
 const InputField: React.FC<InputFieldProps> = ({
   label,
   name,
@@ -17,11 +18,14 @@ const InputField: React.FC<InputFieldProps> = ({
   value,
   onChange,
   placeholder,
-  required = false
+  required = false,
 }) => {
   return (
     <div className="mb-4">
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+      <label
+        htmlFor={name}
+        className="block text-sm font-medium text-gray-700 mb-1"
+      >
         {label}
       </label>
       <input
