@@ -4,6 +4,7 @@ import { login, register } from '../controllers/authControllers';
 import { generateToken } from '../utils/jwt';
 import { Request, Response } from 'express';
 import { authenticate } from '../middlewares/authMiddleware';
+import User from '../models/User';
 
 const router = express.Router();
 
@@ -66,8 +67,33 @@ router.get(
 );
 
 // Route to validate token + fingerprint
-router.get('/validate', authenticate, (req: Request, res: Response) => {
-  res.json({ valid: true, user: req.user });
+router.get('/validate', authenticate, async (req: Request, res: Response) => {
+  try {
+    if (!req.user || typeof req.user !== 'object' || !('email' in req.user)) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const userEmail = (req.user as { email: string }).email;
+
+    const user = await User.findOne({ email: userEmail }); //TODO: Use email instead of ID
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    //USE THIS WHEN EMAIL VERIFICATION IS IMPLEMENTED
+    // if (!user.verified) {
+    //   res.status(403).json({ message: 'Email not verified' });
+    //   return;
+    // }
+
+    res.json({ valid: true, user });
+  } catch (err) {
+    console.error('❌ Error in validate route:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 export default router;

@@ -3,6 +3,7 @@ import Register from './features/auth/pages/Register';
 import Login from './features/auth/pages/Login';
 import Home from './features/user/pages/Home';
 import LoginSuccess from './features/auth/pages/LoginSuccess';
+import { PrivateRoute } from './components/auth/PrivateRoute';
 
 function App() {
   return (
@@ -11,8 +12,17 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
+      {/* Protected Routes (User Side) */}
+      <Route
+        path="/home"
+        element={
+          <PrivateRoute>
+            <Home />
+          </PrivateRoute>
+        }
+      />
+
       {/* User Side */}
-      <Route path="/home" element={<Home />} />
       <Route path="/login/success" element={<LoginSuccess />} />
     </Routes>
   );
