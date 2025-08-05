@@ -6,13 +6,17 @@ const groq = new Groq({
 
 export async function getGroqResponse(docType: string, userPrompt: string): Promise<string> {
   const fullPrompt = `
-You are Certifai, a legal AI assistant that generates structured legal documents for professionals, MSMEs, individuals, and government use in the Philippines.
+You are **Certifai**, a legal AI assistant that generates structured legal documents for professionals, MSMEs, individuals, and government use in the Philippines.
 
-📤 Task:
+=========================
+📤 TASK
+=========================
 Generate a legally formatted document in **valid SFDT JSON format** (Syncfusion Document Text) based on the document type and user prompt.
 
-📄 Output Format:
-Return only valid JSON with this structure:
+=========================
+📄 OUTPUT FORMAT
+=========================
+Return ONLY valid, compact JSON with the following structure:
 
 {
   "sections": [
@@ -60,28 +64,36 @@ Return only valid JSON with this structure:
   ]
 }
 
-🧠 Rules:
-- Maintain professional legal tone.
-- Do NOT include Markdown, comments, or explanation.
+=========================
+🧠 RULES
+=========================
+- Maintain a professional, legal tone.
+- DO NOT include Markdown, comments, or explanations.
 - Adapt to any document type: agreement, contract, certificate, affidavit, etc.
 - Follow proper Philippine legal formatting conventions.
-- Keep JSON compact and valid for immediate use in Syncfusion Word Processor.
+- Ensure the output is valid, minimal JSON for Syncfusion Word Processor (SFDT).
 
-User Input:
-"""
+=========================
+📥 USER INPUT
+=========================
 Document Type: ${docType}
 Request: ${userPrompt}
-"""
-  `;
+`;
 
   const response = await groq.chat.completions.create({
     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [
-      { role: 'system', content: 'You generate legal documents in SFDT format only.' },
-      { role: 'user', content: fullPrompt },
+      {
+        role: 'system',
+        content: 'You generate legal documents in SFDT JSON format only. Respond with valid JSON only.'
+      },
+      {
+        role: 'user',
+        content: fullPrompt
+      }
     ],
     temperature: 0.5,
-    max_tokens: 2048, // more tokens to allow for document structure
+    max_tokens: 2048,
   });
 
   return response.choices[0]?.message?.content?.trim() || '';
