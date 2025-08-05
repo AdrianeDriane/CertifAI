@@ -1,5 +1,5 @@
-import axios from "axios";
-import { getFingerprint } from "../utils/getFingerprint";
+import axios from 'axios';
+import { getFingerprint } from '../utils/getFingerprint';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -14,7 +14,7 @@ export const setLogoutFunction = (logout: () => void) => {
 };
 
 api.interceptors.request.use(async (config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   const fingerprint = await getFingerprint();
 
   if (token) {
@@ -22,7 +22,7 @@ api.interceptors.request.use(async (config) => {
   }
 
   if (fingerprint) {
-    config.headers["x-device-fingerprint"] = fingerprint;
+    config.headers['x-device-fingerprint'] = fingerprint;
   }
 
   return config;
@@ -37,7 +37,7 @@ api.interceptors.response.use(
       if (logoutFunction) {
         logoutFunction();
       } else {
-        localStorage.removeItem("token");
+        localStorage.removeItem('token');
       }
       window.location.href = '/login';
     }
