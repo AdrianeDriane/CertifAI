@@ -10,6 +10,7 @@ import session from 'express-session';
 import passport from 'passport';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
+import groqRoutes from './routes/groqRoutes';
 import documentRoutes from './routes/documentRoutes';
 import './config/passport';
 
@@ -40,6 +41,7 @@ app.use(passport.session());
 app.use('/api', apiRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api', groqRoutes);
 
 const PORT = process.env.PORT;
 connectDB()
