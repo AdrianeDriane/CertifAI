@@ -23,7 +23,7 @@ function App() {
         }
       />
       <Route
-        path="/document-editor"
+        path="/document-editor/:documentId"
         element={
           <PrivateRoute>
             <DocEditor />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import api from '../../api/authApi';
+import api from '../../services/authService';
 import { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 
