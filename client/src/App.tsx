@@ -4,7 +4,7 @@ import Login from './features/auth/pages/Login';
 import Home from './features/user/pages/Home';
 import LoginSuccess from './features/auth/pages/LoginSuccess';
 import { PrivateRoute } from './components/auth/PrivateRoute';
-import DocEditor from './features/documentEditor/DocEditor';
+import DocumentLayout from './layouts/DocumentLayout';
 
 function App() {
   return (
@@ -22,13 +22,16 @@ function App() {
           </PrivateRoute>
         }
       />
+      
+        {/* Document Layout with nested routes */}
       <Route
-        path="/document-editor/:documentId"
+        path="/document"
         element={
           <PrivateRoute>
-            <DocEditor />
+            <DocumentLayout />
           </PrivateRoute>
         }
+
       />
 
       {/* User Side */}

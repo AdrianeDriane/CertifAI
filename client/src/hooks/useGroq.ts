@@ -1,0 +1,41 @@
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export interface GenerateGroqRequest {
+  docType: string;
+  userPrompt: string;
+}
+
+export interface GroqDocumentResponse {
+  success: boolean;
+  document: any; // Replace with strict type when SFDT structure is defined
+}
+
+export const generateGroqDocument = async (
+  payload: GenerateGroqRequest
+): Promise<GroqDocumentResponse> => {
+  try {
+    const token = localStorage.getItem('token');
+
+    const response = await axios.post(
+      `${API_BASE_URL}/groq`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.error || 'Failed to generate Groq document'
+      );
+    }
+    throw new Error('An unexpected error occurred');
+  }
+};
