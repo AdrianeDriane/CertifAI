@@ -5,7 +5,6 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import connectDB from "./config/db";
-import apiRoutes from "./routes/api";
 import session from "express-session";
 import passport from "passport";
 import cookieParser from "cookie-parser";
@@ -38,7 +37,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use("/api", apiRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/groq", groqRoutes);
