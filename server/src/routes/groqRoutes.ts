@@ -1,8 +1,10 @@
-import express, { Request, Response } from 'express';
-import { getGroqResponse } from '../services/groqService';
+import express from "express";
+import { generateDocument } from "../controllers/groqControllers";
+import { authenticate } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
+<<<<<<< HEAD
 // Fallback document generator for when Groq fails
 function generateFallbackDocument(docType: string, userPrompt: string) {
   const title = docType === 'certificate_of_employment' ? 'CERTIFICATE OF EMPLOYMENT' : 
@@ -288,6 +290,9 @@ router.post('/', async (req: Request, res: Response) => {
     }
   }
 });
+=======
+router.post("/", authenticate, generateDocument);
+>>>>>>> b179dc0f36a9337bcd6e8ad008c78e030e637cc7
 
 // Health check endpoint
 router.get('/health', (req: Request, res: Response) => {

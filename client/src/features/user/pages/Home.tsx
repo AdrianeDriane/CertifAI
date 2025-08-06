@@ -1,7 +1,7 @@
-import { type JSX, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import DocumentTitleModal from '../../../components/modals/DocumentTitleModal';
-import { createDocument } from '../../../services/documentService';
+import { type JSX, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import DocumentTitleModal from "../../../components/modals/DocumentTitleModal";
+import { createDocument } from "../../../services/documentService";
 
 export default function Home(): JSX.Element {
   const navigate = useNavigate();
@@ -28,11 +28,11 @@ export default function Home(): JSX.Element {
 
       setIsModalOpen(false);
     } catch (error) {
-      console.error('Failed to create document:', error);
+      console.error("Failed to create document:", error);
       alert(
         error instanceof Error
           ? error.message
-          : 'Failed to create document. Please try again.'
+          : "Failed to create document. Please try again."
       );
     } finally {
       setIsCreating(false);
@@ -67,7 +67,7 @@ export default function Home(): JSX.Element {
             </button>
             <button
               onClick={() => {
-                navigate('/document-editor', { replace: true });
+                navigate("/documents");
               }}
               className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition duration-200"
             >
