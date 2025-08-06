@@ -1,10 +1,11 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Register from './features/auth/pages/Register';
-import Login from './features/auth/pages/Login';
-import Home from './features/user/pages/Home';
-import LoginSuccess from './features/auth/pages/LoginSuccess';
-import { PrivateRoute } from './components/auth/PrivateRoute';
-import DocEditor from './features/documentEditor/DocEditor';
+import { Routes, Route, Navigate } from "react-router-dom";
+import Register from "./features/auth/pages/Register";
+import Login from "./features/auth/pages/Login";
+import Home from "./features/user/pages/Home";
+import LoginSuccess from "./features/auth/pages/LoginSuccess";
+import { PrivateRoute } from "./components/auth/PrivateRoute";
+import DocEditor from "./features/documentEditor/DocEditor";
+import DocumentsPage from "./features/documentEditor/DocumentsPage";
 
 function App() {
   return (
@@ -19,6 +20,14 @@ function App() {
         element={
           <PrivateRoute>
             <Home />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/documents"
+        element={
+          <PrivateRoute>
+            <DocumentsPage />
           </PrivateRoute>
         }
       />
