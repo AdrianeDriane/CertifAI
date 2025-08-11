@@ -1,27 +1,27 @@
 const docTypeFormatting: Record<string, any> = {
-  "Affidavit": {
+  Affidavit: {
     titleFontSize: 14,
     bodyFontSize: 12,
     titleAlignment: "Center",
     lineSpacing: 1.5,
     beforeSpacing: 12,
-    afterSpacing: 12
+    afterSpacing: 12,
   },
-  "Contract": {
+  Contract: {
     titleFontSize: 16,
     bodyFontSize: 12,
     titleAlignment: "Center",
     lineSpacing: 1.15,
     beforeSpacing: 10,
-    afterSpacing: 10
+    afterSpacing: 10,
   },
-  "Certificate": {
+  Certificate: {
     titleFontSize: 16,
     bodyFontSize: 12,
     titleAlignment: "Center",
     lineSpacing: 1.5,
     beforeSpacing: 24,
-    afterSpacing: 12
+    afterSpacing: 12,
   },
   "Authorization Letter": {
     titleFontSize: 14,
@@ -29,51 +29,23 @@ const docTypeFormatting: Record<string, any> = {
     titleAlignment: "Center",
     lineSpacing: 1.5,
     beforeSpacing: 20,
-    afterSpacing: 10
+    afterSpacing: 10,
   },
-  "default": {
+  default: {
     titleFontSize: 14,
     bodyFontSize: 12,
     titleAlignment: "Center",
     lineSpacing: 1.5,
     beforeSpacing: 12,
-    afterSpacing: 12
-  }
+    afterSpacing: 12,
+  },
 };
 
-export function buildLegalDocumentPrompt(docType: string, userPrompt: string): string {
-  return `
-You are Certifai, an AI legal assistant specializing in Philippine legal documents.
-
-Objective:
-Generate a complete, formally structured legal document suitable for Philippine use based on the following:
-
-- Document Type: ${docType}
-- Purpose: ${userPrompt}
-
-Output Format:
-You must return a single valid JSON object only in SFDT (Syncfusion Document Text) format with proper formatting for professional legal documents. DO NOT include any code block, markdown, explanation, or commentary.
-
-Required Formatting:
-- Use "Times New Roman", 12pt for body text
-- Use bold and 16pt for titles (center aligned)
-- Margins: 1 inch (72 points) on all sides
-- Line spacing: 1.5 with lineSpacingType set to "Multiple"
-- Paragraphs must be separate blocks
-- Center alignment for document title only
-- Left alignment for body content
-- Set beforeSpacing: 12 and afterSpacing: 12 for body paragraphs
-- Include signature blocks, dates, and legal formalities
-
-Instructions:
-- Output realistic, professional, and comprehensive legal language
-- Simulate the full structure of real Philippine legal documents
-- Use legal terms, section headers, and closing statements
-- Use placeholders if needed (e.g., [Employee Name], [Date], [Address])
-- Return only valid JSON in SFDT format
-
-Example SFDT JSON output structure:
-{
+export function buildLegalDocumentPrompt(
+  docType: string,
+  userPrompt: string
+): string {
+  const baseStructureExample = `{
   "sections": [
     {
       "sectionFormat": {
@@ -95,7 +67,7 @@ Example SFDT JSON output structure:
           },
           "inlines": [
             {
-              "text": "[DOCUMENT TITLE]",
+              "text": "DOCUMENT TITLE",
               "characterFormat": {
                 "bold": true,
                 "fontSize": 16,
@@ -103,35 +75,56 @@ Example SFDT JSON output structure:
               }
             }
           ]
-        },
-        {
-          "paragraphFormat": {
-            "textAlignment": "Left",
-            "beforeSpacing": 12,
-            "afterSpacing": 12,
-            "lineSpacing": 1.5,
-            "lineSpacingType": "Multiple"
-          },
-          "inlines": [
-            {
-              "text": "[First paragraph of legal content]",
-              "characterFormat": {
-                "fontSize": 12,
-                "fontFamily": "Times New Roman"
-              }
-            }
-          ]
-        },
-        {
-          "inlines": [
-            {
-              "text": "[Additional paragraphs, signatories, date lines, etc.]"
-            }
-          ]
         }
       ]
     }
   ]
-}
-`.trim();
+}`;
+
+  let specificInstructions = "";
+
+  switch (docType) {
+    case "certificate_of_employment":
+      specificInstructions = `
+Generate a Certificate of Employment with these sections:
+1. Title: "CERTIFICATE OF EMPLOYMENT" (centered, bold, 16pt)
+2. Greeting: "TO WHOM IT MAY CONCERN:" (left-aligned, bold, 12pt)
+3. Main certification paragraph (justified, 12pt)
+4. Employment details paragraph (justified, 12pt)  
+5. Purpose statement (justified, 12pt)
+6. Location and date (left-aligned, 12pt)
+7. Signature section with name and title placeholders (left-aligned, 12pt)
+
+Use the user prompt to fill in specific details like employee name, position, company, etc.
+`;
+      break;
+
+    default:
+      specificInstructions = `
+Generate a professional ${docType.replace(/_/g, " ")} document.
+Use the user prompt to determine the specific content and details.
+`;
+  }
+
+  return `
+Create a legal document in SFDT (Syncfusion Document Format) JSON format.
+
+CRITICAL FORMATTING RULES:
+- NEVER create nested "blocks" arrays inside blocks
+- Each block must only contain "paragraphFormat" and "inlines"
+- Use proper spacing with beforeSpacing and afterSpacing
+- All text must be in "inlines" array within each block
+- Use Times New Roman font family
+- Standard margins: 72 points (1 inch) on all sides
+
+${specificInstructions}
+
+User Requirements: ${userPrompt}
+
+EXAMPLE STRUCTURE (DO NOT DEVIATE FROM THIS PATTERN):
+${baseStructureExample}
+
+Generate ONLY the JSON structure, no explanations or markdown formatting.
+Ensure the JSON is valid and follows the exact SFDT format shown above.
+`;
 }
