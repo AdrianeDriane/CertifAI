@@ -1,10 +1,10 @@
-import '../../App.css';
-import { useRef, useState, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import "../../App.css";
+import { useRef, useState, useEffect } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import {
   DocumentEditorContainerComponent,
   Toolbar,
-} from '@syncfusion/ej2-react-documenteditor';
+} from "@syncfusion/ej2-react-documenteditor";
 
 DocumentEditorContainerComponent.Inject(Toolbar);
 
@@ -23,8 +23,10 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt }) => {
   const location = useLocation();
   const state = location.state as LocationState;
 
-  const [fileName, setFileName] = useState('Untitled');
-  const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(null);
+  const [fileName, setFileName] = useState("Untitled");
+  const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     if (state?.documentTitle) {
@@ -47,8 +49,8 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt }) => {
     const editorObj = editorRef.current?.documentEditor;
     if (editorObj) {
       const sfdtContent = editorObj.serialize();
-      console.log('Saving document:', fileName, currentDocumentId, sfdtContent);
-      editorObj.save(fileName.trim() || 'Untitled', 'Docx');
+      console.log("Saving document:", fileName, currentDocumentId, sfdtContent);
+      editorObj.save(fileName.trim() || "Untitled", "Docx");
     }
   };
 

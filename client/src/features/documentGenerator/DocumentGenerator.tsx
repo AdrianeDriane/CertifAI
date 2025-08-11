@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
-import StepOne from './StepOne';
-import StepTwo from './StepTwo';
-import { generateGroqDocument } from '../../services/groqService';
+import React, { useState } from "react";
+import StepOne from "./StepOne";
+import StepTwo from "./StepTwo";
+import { generateGroqDocument } from "../../services/groqService";
 
 interface DocumentGeneratorProps {
   onDocumentGenerated: (sfdt: string) => void;
 }
 
-const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ onDocumentGenerated }) => {
+const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
+  onDocumentGenerated,
+}) => {
   const [step, setStep] = useState(1);
   const [docType, setDocType] = useState<string | null>(null);
-  const [userPrompt, setUserPrompt] = useState('');
+  const [userPrompt, setUserPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sfdtOutput, setSfdtOutput] = useState<string | null>(null);
 
   const handleGenerate = async () => {
@@ -25,7 +28,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ onDocumentGenerat
       setSfdtOutput(JSON.stringify(sfdt, null, 2));
       onDocumentGenerated(sfdt);
     } catch (err) {
-      alert('Failed to generate document. Please try again.');
+      alert("Failed to generate document. Please try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -39,7 +42,9 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ onDocumentGenerat
           <h1 className="text-2xl font-semibold text-gray-800">
             📄 Document Composer
           </h1>
-          <p className="text-gray-500 text-sm">Generate AI-powered legal documents</p>
+          <p className="text-gray-500 text-sm">
+            Generate AI-powered legal documents
+          </p>
         </header>
 
         {step === 1 && (
@@ -60,7 +65,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ onDocumentGenerat
             isLoading={isLoading}
           />
         )}
-{/* 
+        {/* 
         {sfdtOutput && (
           <div className="border-t pt-4">
             <p className="text-sm text-gray-600 font-medium">SFDT Output (for debugging)</p>

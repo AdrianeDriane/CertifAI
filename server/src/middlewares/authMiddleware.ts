@@ -1,16 +1,16 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
-import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction, RequestHandler } from "express";
+import jwt from "jsonwebtoken";
 
 export const authenticate: RequestHandler = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  const fingerprint = req.headers['x-device-fingerprint'];
+  const token = req.headers.authorization?.split(" ")[1];
+  const fingerprint = req.headers["x-device-fingerprint"];
 
   if (!token || !fingerprint) {
-    res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: "Unauthorized" });
     return;
   }
 
@@ -22,14 +22,13 @@ export const authenticate: RequestHandler = (
     };
 
     if (payload.fingerprint !== fingerprint) {
-      res.status(403).json({ message: 'Token used from different device' });
+      res.status(403).json({ message: "Token used from different device" });
       return;
     }
-
     req.user = payload;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
+    res.status(401).json({ message: "Invalid token" });
     return;
   }
 };

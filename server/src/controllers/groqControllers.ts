@@ -12,18 +12,7 @@ export const generateDocument = async (req: Request, res: Response) => {
   }
 
   try {
-    const rawResponse = await getGroqResponse(docType, userPrompt);
-    const sanitized = sanitizeToValidJSON(rawResponse);
-
-    let parsedDocument;
-    try {
-      parsedDocument = JSON.parse(sanitized);
-    } catch (jsonError) {
-      console.error("Invalid JSON from Groq:", sanitized);
-      return res
-        .status(500)
-        .json({ success: false, error: "Groq returned invalid JSON." });
-    }
+    const parsedDocument = await getGroqResponse(docType, userPrompt);
 
     res.json({ success: true, document: parsedDocument });
   } catch (error: any) {

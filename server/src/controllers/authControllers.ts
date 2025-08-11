@@ -5,11 +5,17 @@ import { generateToken } from "../utils/jwt";
 
 // Email Registration
 export const register = async (req: Request, res: Response): Promise<void> => {
-  const { email, password, firstName, middleName, lastName, fingerprint } = req.body;
+  const { email, password, firstName, middleName, lastName, fingerprint } =
+    req.body;
 
   // Validate required fields
   if (!email || !password || !firstName || !lastName || !fingerprint) {
-    res.status(400).json({ message: "Missing required fields: email, password, firstName, lastName, fingerprint" });
+    res
+      .status(400)
+      .json({
+        message:
+          "Missing required fields: email, password, firstName, lastName, fingerprint",
+      });
     return;
   }
 
@@ -17,7 +23,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       if (existingUser.googleId && !existingUser.password) {
-        res.status(400).json({ message: "This email is already used with Google Sign-In. Please use 'Continue with Google'." });
+        res
+          .status(400)
+          .json({
+            message:
+              "This email is already used with Google Sign-In. Please use 'Continue with Google'.",
+          });
         return;
       }
     }
@@ -27,7 +38,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const newUser = new User({
       email,
       password: hashedPassword,
-      fullName: `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`,
+      fullName: `${firstName} ${middleName ? middleName + " " : ""}${lastName}`,
     });
 
     await newUser.save();
@@ -35,7 +46,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const token = generateToken({
       id: (newUser._id as string).toString(),
       email: newUser.email,
-      fingerprint
+      fingerprint,
     });
 
     res.status(201).json({ token });
@@ -53,13 +64,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  if(!fingerprint) {
-    res.status(400).json({message: "Missing device fingerprint"});
+  if (!fingerprint) {
+    res.status(400).json({ message: "Missing device fingerprint" });
     return;
   }
 
   try {
-    const user = await User.findOne({ email }) as (typeof User.prototype & { _id: any, password?: string, googleId?: string });
+    const user = (await User.findOne({ email })) as typeof User.prototype & {
+      _id: any;
+      password?: string;
+      googleId?: string;
+    };
 
     if (!user) {
       res.status(400).json({ message: "Invalid credentials" });
@@ -68,7 +83,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Scenario 1: Email exists but was created via Google
     if (!user.password && user.googleId) {
-      res.status(400).json({ message: "This email is registered using Google. Please use 'Continue with Google'." });
+      res
+        .status(400)
+        .json({
+          message:
+            "This email is registered using Google. Please use 'Continue with Google'.",
+        });
       return;
     }
 
@@ -79,10 +99,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    console.log(
+      "=========================ID========================",
+      user._id
+    );
+
     const token = generateToken({
       id: user._id.toString(),
       email: user.email,
-      fingerprint
+      fingerprint,
     });
 
     res.status(200).json({ token });

@@ -5,6 +5,10 @@ import { IAuthenticatedRequest } from "../types/IAuthenticatedRequest";
 export const createNewDocument: RequestHandler = async (req, res) => {
   try {
     const authReq = req as IAuthenticatedRequest;
+    if (!authReq.user || !authReq.user.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const { title, sfdt } = authReq.body;
     const userId = authReq.user.id;
 
@@ -12,13 +16,12 @@ export const createNewDocument: RequestHandler = async (req, res) => {
       version: 1,
       action: "uploaded",
       sfdt,
-      hash: "test", // generate hash in next steps
-      blockchainTxHash: "test", //dummy
+      hash: "test", // TODO: generate actual hash
+      blockchainTxHash: "test", // TODO: replace with real
       createdAt: new Date(),
       modifiedBy: userId,
     };
 
-    // Create the document
     const newDoc = new DocumentModel({
       title,
       createdBy: userId,
