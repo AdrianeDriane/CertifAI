@@ -44,11 +44,6 @@ router.get(
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
-    console.log(
-      "====================GOOGLECALLBACK===================",
-      req.user
-    );
-
     // Get user info and fingerprint from the modified passport strategy
     const { _id, email, fingerprint } = req.user as {
       _id: string;

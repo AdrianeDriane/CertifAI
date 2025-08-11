@@ -14,6 +14,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
   const [docType, setDocType] = useState<string | null>(null);
   const [userPrompt, setUserPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  //FIXME: remove
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sfdtOutput, setSfdtOutput] = useState<string | null>(null);
 
