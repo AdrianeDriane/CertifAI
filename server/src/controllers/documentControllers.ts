@@ -68,3 +68,27 @@ export const getDocuments: RequestHandler = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error });
   }
 };
+
+export const getDocumentById: RequestHandler = async (req, res) => {
+  try {
+    const user = req.user as { id: string };
+    const { document_id } = req.params;
+
+    if (!user?.id) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const document = await DocumentModel.findById(document_id);
+
+    if (!document) {
+      res.status(404).json({ message: "Document not found." });
+      return;
+    }
+
+    res.status(200).json(document);
+  } catch (error) {
+    console.error("Error fetching document: ", error);
+    res.status(500).json({ message: "Error fetching document", error });
+  }
+};
