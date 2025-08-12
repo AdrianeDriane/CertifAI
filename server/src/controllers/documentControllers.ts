@@ -1,6 +1,7 @@
 import { RequestHandler, Response } from "express";
 import DocumentModel from "../models/Document";
 import { IAuthenticatedRequest } from "../types/IAuthenticatedRequest";
+import User from "../models/User";
 
 export const createNewDocument: RequestHandler = async (req, res) => {
   try {
@@ -32,6 +33,12 @@ export const createNewDocument: RequestHandler = async (req, res) => {
     });
 
     await newDoc.save();
+
+    await User.findByIdAndUpdate(
+      userId,
+      { $addToSet: { documents: newDoc._id } },
+      { new: true, runValidators: true }
+    );
     res.status(201).json(newDoc);
   } catch (error) {
     console.error(error);
