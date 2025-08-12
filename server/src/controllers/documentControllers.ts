@@ -48,8 +48,11 @@ export const getDocuments: RequestHandler = async (req, res) => {
       return;
     }
 
+    const userDocuments = await User.findById(user.id).select("documents");
+    const documentIds = userDocuments?.documents ?? [];
+
     const documents = await DocumentModel.find({
-      createdBy: user.id,
+      _id: { $in: documentIds },
     });
 
     res.status(200).json({ documents });
