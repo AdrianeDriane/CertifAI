@@ -10,12 +10,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
   // Validate required fields
   if (!email || !password || !firstName || !lastName || !fingerprint) {
-    res
-      .status(400)
-      .json({
-        message:
-          "Missing required fields: email, password, firstName, lastName, fingerprint",
-      });
+    res.status(400).json({
+      message:
+        "Missing required fields: email, password, firstName, lastName, fingerprint",
+    });
     return;
   }
 
@@ -23,12 +21,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       if (existingUser.googleId && !existingUser.password) {
-        res
-          .status(400)
-          .json({
-            message:
-              "This email is already used with Google Sign-In. Please use 'Continue with Google'.",
-          });
+        res.status(400).json({
+          message:
+            "This email is already used with Google Sign-In. Please use 'Continue with Google'.",
+        });
         return;
       }
     }
@@ -83,12 +79,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Scenario 1: Email exists but was created via Google
     if (!user.password && user.googleId) {
-      res
-        .status(400)
-        .json({
-          message:
-            "This email is registered using Google. Please use 'Continue with Google'.",
-        });
+      res.status(400).json({
+        message:
+          "This email is registered using Google. Please use 'Continue with Google'.",
+      });
       return;
     }
 
@@ -98,11 +92,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ message: "Invalid credentials" });
       return;
     }
-
-    console.log(
-      "=========================ID========================",
-      user._id
-    );
 
     const token = generateToken({
       id: user._id.toString(),
