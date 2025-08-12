@@ -5,6 +5,8 @@ import {
   DocumentEditorContainerComponent,
   Toolbar,
 } from "@syncfusion/ej2-react-documenteditor";
+import { getFingerprint } from "../../utils/getFingerprint";
+import axios from "axios";
 
 DocumentEditorContainerComponent.Inject(Toolbar);
 
@@ -39,6 +41,32 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
     }
   };
 
+  const saveChanges = async () => {
+    const token = localStorage.getItem("token");
+    const fingerprint = await getFingerprint();
+    const editorObj = editorRef.current?.documentEditor;
+    let sfdtContent;
+    if (editorObj) {
+      sfdtContent = editorObj.serialize();
+    }
+
+    try {
+      await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
+        { sfdt: sfdtContent, action: "edited" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "x-device-fingerprint": fingerprint,
+          },
+        }
+      );
+    } catch (err) {
+      console.error("Error fetching document:", err);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full">
       {/* Header */}
@@ -51,10 +79,16 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
           className="text-lg font-medium px-3 py-2 border border-gray-300 rounded-md"
         />
         <button
+          onClick={saveChanges}
+          className="bg-blue-600 text-white text-sm px-5 py-2 rounded-md hover:bg-blue-700 transition"
+        >
+          Save Changes
+        </button>
+        <button
           onClick={onSave}
           className="bg-blue-600 text-white text-sm px-5 py-2 rounded-md hover:bg-blue-700 transition"
         >
-          Save
+          Export
         </button>
       </div>
 

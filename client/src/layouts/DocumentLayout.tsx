@@ -4,13 +4,14 @@ import DocEditor from "../features/documentEditor/DocEditor";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { getFingerprint } from "../utils/getFingerprint";
+import { getLatestSfdt } from "../utils/getLatestSfdt";
 
 interface Version {
   version: number;
   sfdt: string;
 }
 
-interface DocumentData {
+export interface DocumentData {
   _id: string;
   title: string;
   versions: Version[];
@@ -25,6 +26,7 @@ const DocumentLayout = () => {
     const fetchDocument = async () => {
       const token = localStorage.getItem("token");
       const fingerprint = await getFingerprint();
+
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
@@ -36,15 +38,13 @@ const DocumentLayout = () => {
             },
           }
         );
-        const doc: DocumentData = res.data;
 
+        const doc: DocumentData = res.data;
         setDocumentData(doc);
 
-        if (doc.versions && doc.versions.length > 0) {
-          const latestVersion = doc.versions.reduce((prev, curr) =>
-            curr.version > prev.version ? curr : prev
-          );
-          setSfdtContent(latestVersion.sfdt);
+        const latestSfdt = getLatestSfdt(doc);
+        if (latestSfdt) {
+          setSfdtContent(latestSfdt);
         }
       } catch (err) {
         console.error("Error fetching document:", err);
