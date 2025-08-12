@@ -71,13 +71,7 @@ export const getDocuments: RequestHandler = async (req, res) => {
 
 export const getDocumentById: RequestHandler = async (req, res) => {
   try {
-    const user = req.user as { id: string };
     const { document_id } = req.params;
-
-    if (!user?.id) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
 
     const document = await DocumentModel.findById(document_id);
 

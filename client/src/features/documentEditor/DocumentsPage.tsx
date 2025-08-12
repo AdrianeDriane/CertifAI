@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { getFingerprint } from "../../utils/getFingerprint";
+import { useNavigate } from "react-router-dom";
 
 interface IVersion {
   version: number;
@@ -50,6 +51,8 @@ function DocumentsPage() {
   const [sortBy, setSortBy] = useState<string>("updatedAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showFilters, setShowFilters] = useState(false);
+
+  const navigate = useNavigate();
 
   // Fetch documents from API
   useEffect(() => {
@@ -431,7 +434,12 @@ function DocumentsPage() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-1">
+                  <button
+                    className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+                    onClick={() => {
+                      navigate(`/document-editor/${doc._id}`);
+                    }}
+                  >
                     <Eye className="w-3 h-3" />
                     Open
                   </button>
