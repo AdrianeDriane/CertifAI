@@ -1,8 +1,10 @@
-import { RequestHandler, Response } from "express";
+import { RequestHandler } from "express";
 import DocumentModel from "../models/Document";
 import { IAuthenticatedRequest } from "../types/IAuthenticatedRequest";
 import User from "../models/User";
 import mongoose from "mongoose";
+import { hashSfdt } from "../utils/hash";
+import { readTxDataAsString, storeHashOnPolygon } from "../utils/blockchain";
 
 export const createNewDocument: RequestHandler = async (req, res) => {
   try {
@@ -14,12 +16,18 @@ export const createNewDocument: RequestHandler = async (req, res) => {
     const { title, sfdt } = authReq.body;
     const userId = authReq.user.id;
 
+    // Generate document hash
+    const hash = hashSfdt(sfdt);
+
+    // Send hash to Polygon Amoy blockchain
+    const blockchainTxHash = await storeHashOnPolygon(hash);
+
     const initialVersion = {
       version: 1,
       action: "uploaded",
       sfdt,
-      hash: "test", // TODO: generate actual hash
-      blockchainTxHash: "test", // TODO: replace with real
+      hash,
+      blockchainTxHash,
       createdAt: new Date(),
       modifiedBy: userId,
     };
@@ -40,6 +48,7 @@ export const createNewDocument: RequestHandler = async (req, res) => {
       { $addToSet: { documents: newDoc._id } },
       { new: true, runValidators: true }
     );
+
     res.status(201).json(newDoc);
   } catch (error) {
     console.error(error);
@@ -101,31 +110,25 @@ export const updateDocument: RequestHandler = async (req, res) => {
     }
 
     const document = await DocumentModel.findById(document_id);
-
     if (!document) {
       return res
         .status(404)
         .json({ message: "Document to update is not found." });
     }
 
+    // Find latest version
     const latestVersion = document.versions.reduce((prev, curr) =>
       curr.version > prev.version ? curr : prev
     );
 
-    // Deep compare parsed JSON of sfdt
+    // Compare with previous version
     let noChanges = false;
     try {
       const latestSfdtJSON = JSON.parse(latestVersion.sfdt);
       const newSfdtJSON = JSON.parse(sfdt);
-
       noChanges =
         JSON.stringify(latestSfdtJSON) === JSON.stringify(newSfdtJSON);
-
-      console.log(noChanges);
-    } catch (err) {
-      console.warn(
-        "Failed to parse sfdt JSON for comparison, falling back to string compare"
-      );
+    } catch {
       noChanges = latestVersion.sfdt === sfdt;
     }
 
@@ -136,13 +139,19 @@ export const updateDocument: RequestHandler = async (req, res) => {
       });
     }
 
-    // TODO: hash
+    // Generate new hash
+    const hash = hashSfdt(sfdt);
+
+    // Send new hash to blockchain
+    const blockchainTxHash = await storeHashOnPolygon(hash);
+
+    // Create new version entry
     const newVersion = {
       version: latestVersion.version + 1,
       action,
       sfdt,
-      hash: "sampleHash",
-      blockchainTxHash: "sampleBlockchainTxHash",
+      hash,
+      blockchainTxHash,
       createdAt: new Date(),
       modifiedBy: new mongoose.Types.ObjectId(modifiedBy),
     };
@@ -158,5 +167,37 @@ export const updateDocument: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error("Error updating document: ", error);
     res.status(500).json({ message: "Error updating document", error });
+  }
+};
+
+// TODO: Use this with the newly added featrue Document Verification in MVP
+export const verifyDocumentVersion: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params as { id: string }; // safe cast
+    const { version } = req.query as { version?: string };
+
+    const doc = await DocumentModel.findById(id);
+    if (!doc) return res.status(404).json({ error: "Document not found" });
+
+    const verNum = Number(version ?? doc.currentVersion);
+    const versionEntry = doc.versions.find((v) => v.version === verNum);
+    if (!versionEntry)
+      return res.status(404).json({ error: "Version not found" });
+
+    const localHash = hashSfdt(versionEntry.sfdt);
+    const onChainDataStr = await readTxDataAsString(
+      versionEntry.blockchainTxHash
+    );
+
+    res.json({
+      documentId: id,
+      version: verNum,
+      localHash,
+      onChainHashInTxData: onChainDataStr,
+      matches: localHash === onChainDataStr,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Verification failed" });
   }
 };
