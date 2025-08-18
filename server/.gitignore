@@ -7,6 +7,9 @@ dist/
 # Dependencies
 node_modules/
 
+# Ignore local personal testing scripts
+src/scripts
+
 # Logs
 *.log
 
