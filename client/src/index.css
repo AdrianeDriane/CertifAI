@@ -16,7 +16,6 @@
   --font-natasans: "Nata Sans", sans-serif;
 }
 
-/* Refer to below on how we can use default fonts for automated fonts */
 @layer base {
   html {
     font-family: var(--font-natasans, "Nata Sans", sans-serif);
