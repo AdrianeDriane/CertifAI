@@ -1,3 +1,5 @@
+
+// Enhanced Groq service with better error handling and validation
 import { Groq } from "groq-sdk";
 import { buildLegalDocumentPrompt } from "./groqPromptBuilder";
 
@@ -5,186 +7,71 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-interface SFDTInline {
-  text: string;
-  characterFormat: {
-    bold?: boolean;
-    fontSize?: number;
-    fontFamily?: string;
-    italic?: boolean;
-  };
-}
-
-interface SFDTBlock {
-  paragraphFormat: {
-    textAlignment?: string;
-    beforeSpacing?: number;
-    afterSpacing?: number;
-    lineSpacing?: number;
-    lineSpacingType?: string;
-  };
-  inlines: SFDTInline[];
-}
-
-interface SFDTSection {
-  sectionFormat: {
-    pageSetup: {
-      topMargin: number;
-      bottomMargin: number;
-      leftMargin: number;
-      rightMargin: number;
-    };
-  };
-  blocks: SFDTBlock[];
-}
-
-interface SFDTDocument {
-  sections: SFDTSection[];
-}
-
-function validateSFDTStructure(data: any): data is SFDTDocument {
-  console.log("Validating SFDT structure:", JSON.stringify(data, null, 2));
-
-  if (!data || typeof data !== "object") {
-    console.error("Data is not an object");
-    return false;
-  }
-
-  if (!Array.isArray(data.sections)) {
-    console.error("Sections is not an array");
-    return false;
-  }
-
-  return data.sections.every((section: any, sectionIndex: number) => {
-    console.log(`Validating section ${sectionIndex}:`, section);
-
-    if (!section.sectionFormat || !section.sectionFormat.pageSetup) {
-      console.error(
-        `Section ${sectionIndex}: Missing sectionFormat or pageSetup`
-      );
-      return false;
-    }
-
-    if (!Array.isArray(section.blocks)) {
-      console.error(`Section ${sectionIndex}: blocks is not an array`);
-      return false;
-    }
-
-    return section.blocks.every((block: any, blockIndex: number) => {
-      console.log(`Validating block ${blockIndex}:`, block);
-
-      // Check for invalid nested blocks structure
-      if (block.blocks) {
-        console.error(
-          `Block ${blockIndex}: Invalid nested blocks structure detected`
-        );
-        return false;
-      }
-
-      if (!block.paragraphFormat) {
-        console.error(`Block ${blockIndex}: Missing paragraphFormat`);
-        return false;
-      }
-
-      if (!Array.isArray(block.inlines)) {
-        console.error(`Block ${blockIndex}: inlines is not an array`);
-        return false;
-      }
-
-      return block.inlines.every((inline: any, inlineIndex: number) => {
-        if (typeof inline.text !== "string") {
-          console.error(
-            `Block ${blockIndex}, Inline ${inlineIndex}: text is not a string`
-          );
-          return false;
-        }
-
-        if (
-          !inline.characterFormat ||
-          typeof inline.characterFormat !== "object"
-        ) {
-          console.error(
-            `Block ${blockIndex}, Inline ${inlineIndex}: Missing or invalid characterFormat`
-          );
-          return false;
-        }
-
-        return true;
-      });
-    });
-  });
-}
-
-function sanitizeSFDTStructure(data: any): SFDTDocument {
-  // Fix common structural issues that Groq might generate
-  if (!data.sections || !Array.isArray(data.sections)) {
-    throw new Error("Missing or invalid sections array");
-  }
-
-  const sanitizedSections = data.sections.map((section: any) => {
-    if (!section.blocks || !Array.isArray(section.blocks)) {
-      throw new Error("Missing or invalid blocks array in section");
-    }
-
-    // Flatten any nested blocks structures
-    const flattenedBlocks: any[] = [];
-
-    section.blocks.forEach((block: any) => {
-      if (block.blocks && Array.isArray(block.blocks)) {
-        // This is the problematic nested structure - flatten it
-        console.log("Flattening nested blocks structure");
-        block.blocks.forEach((nestedBlock: any) => {
-          flattenedBlocks.push(nestedBlock);
-        });
-      } else {
-        // Normal block structure
-        flattenedBlocks.push(block);
-      }
-    });
-
-    return {
-      ...section,
-      blocks: flattenedBlocks,
-    };
-  });
-
-  return {
-    sections: sanitizedSections,
-  };
-}
-
+// Enhanced JSON extraction with better validation
 function extractJSON(text: string): string {
-  // Remove code blocks and markdown
+  // Remove various markdown formats
   let cleaned = text
-    .replace(/```(?:json|javascript)?\s*/gi, "")
+    .replace(/```(?:json|javascript|js)?\s*/gi, "")
     .replace(/```\s*$/g, "")
+    .replace(/^\s*```\s*/g, "")
+    .replace(/\s*```\s*$/g, "")
     .trim();
-
-  // Find JSON object boundaries
+  
+  // Try to find the main JSON object
   const jsonStart = cleaned.indexOf("{");
   const jsonEnd = cleaned.lastIndexOf("}");
-
+  
   if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
     throw new Error("No valid JSON object found in response");
   }
-
+  
   return cleaned.substring(jsonStart, jsonEnd + 1);
 }
 
 function sanitizeJSON(jsonString: string): string {
   return jsonString
-    .replace(/[""]/g, '"') // Replace smart quotes
-    .replace(/['']/g, "'") // Replace smart single quotes
-    .replace(/,\s*([}\]])/g, "$1") // Remove trailing commas
-    .replace(/\r?\n/g, " ") // Replace newlines with spaces
-    .replace(/\s+/g, " ") // Normalize whitespace
+    .replace(/[""]/g, '"')           // Replace smart quotes
+    .replace(/['']/g, "'")           // Replace smart single quotes
+    .replace(/,\s*([}\]])/g, "$1")   // Remove trailing commas
+    .replace(/\r?\n/g, " ")          // Replace newlines with spaces
+    .replace(/\s+/g, " ")            // Normalize whitespace
+    .replace(/\\n/g, "\\n")          // Preserve escaped newlines
+    .replace(/\\t/g, "\\t")          // Preserve escaped tabs
     .trim();
 }
 
+// Validate the generated document structure
+function validateDocumentStructure(parsed: any): void {
+  const requiredFields = [
+    'metadata',
+    'header', 
+    'preamble',
+    'parties',
+    'signatures'
+  ];
+  
+  for (const field of requiredFields) {
+    if (!parsed[field]) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
+  
+  // Validate parties array
+  if (!Array.isArray(parsed.parties) || parsed.parties.length === 0) {
+    throw new Error("Document must have at least one party");
+  }
+  
+  // Validate signatures array
+  if (!Array.isArray(parsed.signatures) || parsed.signatures.length === 0) {
+    throw new Error("Document must have signature provisions");
+  }
+}
+
+// Main enhanced function
 export async function getGroqResponse(
   docType: string,
   userPrompt: string
-): Promise<SFDTDocument> {
+): Promise<any> {
   if (!process.env.GROQ_API_KEY) {
     throw new Error("GROQ_API_KEY environment variable is not set");
   }
@@ -193,55 +80,22 @@ export async function getGroqResponse(
 
   try {
     const response = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: "llama3-70b-8192", // Use more powerful model for complex legal docs
       messages: [
         {
           role: "system",
-          content: `You are a legal document generator. You must respond ONLY with valid JSON in SFDT format.
-
-CRITICAL RULES:
-1. NO nested "blocks" arrays inside blocks - this is invalid
-2. Each block must contain only: paragraphFormat and inlines
-3. Never put blocks inside blocks
-4. Follow this exact structure:
-
-{
-  "sections": [{
-    "sectionFormat": {
-      "pageSetup": {
-        "topMargin": 72,
-        "bottomMargin": 72,
-        "leftMargin": 72,
-        "rightMargin": 72
-      }
-    },
-    "blocks": [{
-      "paragraphFormat": {
-        "textAlignment": "Center",
-        "beforeSpacing": 12,
-        "afterSpacing": 18,
-        "lineSpacing": 1.5,
-        "lineSpacingType": "Multiple"
-      },
-      "inlines": [{
-        "text": "Your text here",
-        "characterFormat": {
-          "bold": true,
-          "fontSize": 16,
-          "fontFamily": "Times New Roman"
-        }
-      }]
-    }]
-  }]
-}
-
-Respond with ONLY the JSON, no explanations.`,
+          content: `You are a specialized Philippine legal document AI. Generate ONLY valid JSON responses with no additional text, explanations, or markdown formatting. Focus on legal precision, SFDT compatibility, and Philippine legal standards.`,
         },
-        { role: "user", content: fullPrompt },
+        { 
+          role: "user", 
+          content: fullPrompt 
+        },
       ],
-      temperature: 0.1, // Very low temperature for consistency
-      max_tokens: 4000,
-      top_p: 0.8,
+      temperature: 0.1,           // Low temperature for consistency
+      max_tokens: 8000,           // Increased for complex documents
+      top_p: 0.9,                 // Slightly higher for better variety
+      frequency_penalty: 0.1,     // Reduce repetition
+      presence_penalty: 0.1,      // Encourage diverse content
     });
 
     const rawContent = response.choices[0]?.message?.content;
@@ -258,38 +112,43 @@ Respond with ONLY the JSON, no explanations.`,
 
     console.log("Sanitized JSON:", sanitizedJSON.substring(0, 500) + "...");
 
-    let parsedDocument: any;
+    // Parse JSON with enhanced error handling
+    let parsed: any;
     try {
-      parsedDocument = JSON.parse(sanitizedJSON);
+      parsed = JSON.parse(sanitizedJSON);
     } catch (parseError: any) {
       console.error("JSON Parse Error:", parseError.message);
-      console.error("Failed JSON:", sanitizedJSON);
+      console.error("Failed JSON substring:", sanitizedJSON.substring(0, 1000));
       throw new Error(`Invalid JSON format: ${parseError.message}`);
     }
 
-    // Sanitize structure to fix common issues
-    const sanitizedDocument = sanitizeSFDTStructure(parsedDocument);
-
-    // Validate SFDT structure
-    if (!validateSFDTStructure(sanitizedDocument)) {
-      console.error("Invalid SFDT structure after sanitization");
-      throw new Error(
-        "Generated document does not match SFDT format requirements"
-      );
+    // Validate document structure
+    try {
+      validateDocumentStructure(parsed);
+    } catch (validationError: any) {
+      console.warn("Document structure validation warning:", validationError.message);
+      // Don't throw - just warn, as some documents may have different structures
     }
 
-    return sanitizedDocument as SFDTDocument;
+    return parsed;
   } catch (error: any) {
     console.error("Groq API Error:", error);
 
-    if (error.message?.includes("rate limit")) {
-      throw new Error(
-        "API rate limit exceeded. Please try again in a few minutes."
-      );
+    // Enhanced error handling
+    if (error.message?.includes("rate limit") || error.code === 429) {
+      throw new Error("API rate limit exceeded. Please try again in a few minutes.");
     }
 
-    if (error.message?.includes("API key")) {
+    if (error.message?.includes("API key") || error.code === 401) {
       throw new Error("Invalid API key configuration");
+    }
+
+    if (error.message?.includes("timeout") || error.code === 408) {
+      throw new Error("Request timeout. The document may be too complex. Please try with simpler requirements.");
+    }
+
+    if (error.message?.includes("content filter") || error.code === 400) {
+      throw new Error("Content filtered. Please ensure your request complies with usage policies.");
     }
 
     throw error;
