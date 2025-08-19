@@ -28,6 +28,9 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [localFileName, setLocalFileName] = useState(fileName);
   const [signatureCount, setSignatureCount] = useState(0);
+  const [hasSignature, setHasSignature] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
 
   const insertSignature = (signatureOptions: SignatureOptions) => {
     const editorObj = editorRef.current?.documentEditor;
@@ -43,14 +46,21 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
           signatureOptions.height
         );
 
-        // Increment signature counter
+        // Increment signature counter and set signature state
         setSignatureCount((prev) => prev + 1);
+        setHasSignature(true);
+        setIsDirty(true);
 
         console.log(
           `Signature ${signatureCount + 1} inserted successfully (${
             signatureOptions.width
           }x${signatureOptions.height})`
         );
+
+        // Auto-save with "signed" action after signature insertion
+        setTimeout(() => {
+          saveChangesWithAction("signed");
+        }, 100);
       } catch (error) {
         console.error("Error inserting signature:", error);
 
@@ -58,7 +68,15 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
         try {
           editorObj.editor.insertImage(signatureOptions.dataUrl);
           setSignatureCount((prev) => prev + 1);
+          setHasSignature(true);
+          setIsDirty(true);
+
           console.log("Signature inserted with basic method");
+
+          // Auto-save with "signed" action
+          setTimeout(() => {
+            saveChangesWithAction("signed");
+          }, 100);
         } catch (fallbackError) {
           console.error("Fallback insertion also failed:", fallbackError);
           alert("Error inserting signature. Please try again.");
@@ -66,6 +84,47 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
       }
     }
     setShowSignatureModal(false);
+  };
+
+  const handleAddSignatureClick = () => {
+    if (isDirty) {
+      const shouldSave = window.confirm(
+        "You must save your changes before adding a signature. Save now?"
+      );
+      if (shouldSave) {
+        saveChangesWithAction("edited").then(() => {
+          setShowSignatureModal(true);
+        });
+      }
+      return;
+    }
+
+    // If no unsaved changes, allow signature modal to open
+    setShowSignatureModal(true);
+  };
+
+  const handleContentChange = () => {
+    // If content changes and we have signatures, show confirmation
+    if (hasSignature && !showEditConfirmDialog) {
+      setShowEditConfirmDialog(true);
+      return;
+    }
+
+    // Otherwise, just mark as dirty
+    setIsDirty(true);
+  };
+
+  const handleEditConfirmation = (shouldContinue: boolean) => {
+    if (shouldContinue) {
+      // Clear signature state and re-enable editing
+      setHasSignature(false);
+      setSignatureCount(0);
+      setIsDirty(true);
+
+      console.log("Signatures cleared, editing re-enabled");
+    }
+
+    setShowEditConfirmDialog(false);
   };
 
   useEffect(() => {
@@ -77,11 +136,22 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
     if (sfdt && editorRef.current) {
       try {
         editorRef.current.documentEditor.open(sfdt);
+        // Reset states when loading new document
+        setIsDirty(false);
+        setHasSignature(false);
+        setSignatureCount(0);
       } catch (error) {
         console.error("Error loading document:", error);
       }
     }
   }, [sfdt]);
+
+  // Handle read-only state changes
+  useEffect(() => {
+    if (editorRef.current?.documentEditor) {
+      editorRef.current.documentEditor.isReadOnly = hasSignature;
+    }
+  }, [hasSignature]);
 
   const onSave = () => {
     const editorObj = editorRef.current?.documentEditor;
@@ -97,6 +167,10 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
   };
 
   const saveChanges = async () => {
+    return saveChangesWithAction("edited");
+  };
+
+  const saveChangesWithAction = async (action: "edited" | "signed") => {
     const token = localStorage.getItem("token");
     const fingerprint = await getFingerprint();
     const editorObj = editorRef.current?.documentEditor;
@@ -111,7 +185,7 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
 
       await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
-        { sfdt: sfdtContent, action: "edited" },
+        { sfdt: sfdtContent, action },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -120,7 +194,11 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
           },
         }
       );
-      console.log("Document saved successfully");
+
+      // Clear dirty flag after successful save
+      setIsDirty(false);
+
+      console.log(`Document saved successfully with action: ${action}`);
     } catch (err) {
       console.error("Error saving document:", err);
     }
@@ -136,18 +214,36 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
           onChange={(e) => setLocalFileName(e.target.value)}
           placeholder="Enter file name"
           className="text-lg font-medium px-3 py-2 border border-gray-300 rounded-md flex-1 max-w-xs"
+          disabled={hasSignature}
         />
 
         <div className="flex gap-2 items-center">
+          {isDirty && (
+            <span className="text-sm text-amber-600 px-3 py-2 bg-amber-50 rounded-md border border-amber-200">
+              Unsaved changes
+            </span>
+          )}
+
           {signatureCount > 0 && (
-            <span className="text-sm text-gray-600 px-3 py-2 bg-gray-50 rounded-md">
+            <span className="text-sm text-green-700 px-3 py-2 bg-green-50 rounded-md border border-green-200">
               Signatures: {signatureCount}
             </span>
           )}
 
+          {hasSignature && (
+            <span className="text-sm text-blue-700 px-3 py-2 bg-blue-50 rounded-md border border-blue-200">
+              Read-only (Signed)
+            </span>
+          )}
+
           <button
-            onClick={() => setShowSignatureModal(true)}
-            className="bg-green-600 text-white text-sm px-5 py-2 rounded-md hover:bg-green-700 transition whitespace-nowrap flex items-center gap-2"
+            onClick={handleAddSignatureClick}
+            disabled={hasSignature}
+            className={`text-sm px-5 py-2 rounded-md transition whitespace-nowrap flex items-center gap-2 ${
+              hasSignature
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-green-600 text-white hover:bg-green-700"
+            }`}
           >
             <svg
               className="w-4 h-4"
@@ -167,7 +263,12 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
 
           <button
             onClick={saveChanges}
-            className="bg-blue-600 text-white text-sm px-5 py-2 rounded-md hover:bg-blue-700 transition whitespace-nowrap"
+            disabled={!isDirty}
+            className={`text-sm px-5 py-2 rounded-md transition whitespace-nowrap ${
+              isDirty
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
           >
             Save Changes
           </button>
@@ -188,7 +289,8 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
           ref={editorRef}
           height="100%"
           serviceUrl="https://services.syncfusion.com/react/production/api/documenteditor/"
-          enableToolbar={true}
+          enableToolbar={!hasSignature}
+          contentChange={handleContentChange}
         />
       </div>
 
@@ -198,6 +300,36 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
           onConfirm={insertSignature}
           onCancel={() => setShowSignatureModal(false)}
         />
+      )}
+
+      {/* Edit Confirmation Dialog */}
+      {showEditConfirmDialog && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-[450px] max-w-[95vw]">
+            <h3 className="text-lg font-semibold mb-3 text-gray-800">
+              Edit Signed Document?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              This document contains signatures. Editing will remove all
+              existing signatures and make the document editable again. Do you
+              want to continue?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => handleEditConfirmation(false)}
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleEditConfirmation(true)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              >
+                Remove Signatures & Edit
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
