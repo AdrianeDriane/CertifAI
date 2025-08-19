@@ -14,6 +14,7 @@ DocumentEditorContainerComponent.Inject(Toolbar);
 interface DocEditorProps {
   sfdt: string | null;
   fileName: string;
+  documentStatus?: string;
 }
 
 interface SignatureOptions {
@@ -22,7 +23,11 @@ interface SignatureOptions {
   height: number;
 }
 
-const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
+const DocEditor: React.FC<DocEditorProps> = ({
+  sfdt,
+  fileName,
+  documentStatus,
+}) => {
   const editorRef = useRef<DocumentEditorContainerComponent>(null);
   const { documentId } = useParams<{ documentId?: string }>();
   const [showSignatureModal, setShowSignatureModal] = useState(false);
@@ -31,6 +36,11 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
   const [hasSignature, setHasSignature] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
+  const [forceEditable, setForceEditable] = useState(false); // New state for forced editing
+
+  // Check if document should be read-only
+  const isDocumentSigned = documentStatus === "signed";
+  const shouldBeReadOnly = (hasSignature || isDocumentSigned) && !forceEditable;
 
   const insertSignature = (signatureOptions: SignatureOptions) => {
     const editorObj = editorRef.current?.documentEditor;
@@ -104,8 +114,12 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
   };
 
   const handleContentChange = () => {
-    // If content changes and we have signatures, show confirmation
-    if (hasSignature && !showEditConfirmDialog) {
+    // If content changes and we have signatures or document is signed, show confirmation
+    if (
+      (hasSignature || isDocumentSigned) &&
+      !showEditConfirmDialog &&
+      !forceEditable
+    ) {
       setShowEditConfirmDialog(true);
       return;
     }
@@ -120,11 +134,26 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
       setHasSignature(false);
       setSignatureCount(0);
       setIsDirty(true);
+      setForceEditable(true); // Force editing even if document status is signed
 
       console.log("Signatures cleared, editing re-enabled");
     }
 
     setShowEditConfirmDialog(false);
+  };
+
+  const handleForceEdit = () => {
+    const shouldContinue = window.confirm(
+      "This will make the signed document editable. Any signatures will be invalidated. Do you want to continue?"
+    );
+
+    if (shouldContinue) {
+      setForceEditable(true);
+      setHasSignature(false);
+      setSignatureCount(0);
+      setIsDirty(true);
+      console.log("Document forced to editable mode");
+    }
   };
 
   useEffect(() => {
@@ -140,6 +169,7 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
         setIsDirty(false);
         setHasSignature(false);
         setSignatureCount(0);
+        setForceEditable(false); // Reset forced editing when loading new document
       } catch (error) {
         console.error("Error loading document:", error);
       }
@@ -148,10 +178,14 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
 
   // Handle read-only state changes
   useEffect(() => {
-    if (editorRef.current?.documentEditor) {
-      editorRef.current.documentEditor.isReadOnly = hasSignature;
+    const editorObj = editorRef.current?.documentEditor;
+    const container = editorRef.current as any;
+
+    if (editorObj && container) {
+      editorObj.isReadOnly = shouldBeReadOnly;
+      container.showToolbar = !shouldBeReadOnly; // hide/show toolbar safely
     }
-  }, [hasSignature]);
+  }, [shouldBeReadOnly]);
 
   const onSave = () => {
     const editorObj = editorRef.current?.documentEditor;
@@ -214,7 +248,7 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
           onChange={(e) => setLocalFileName(e.target.value)}
           placeholder="Enter file name"
           className="text-lg font-medium px-3 py-2 border border-gray-300 rounded-md flex-1 max-w-xs"
-          disabled={hasSignature}
+          disabled={shouldBeReadOnly}
         />
 
         <div className="flex gap-2 items-center">
@@ -230,17 +264,46 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
             </span>
           )}
 
-          {hasSignature && (
+          {shouldBeReadOnly && (
             <span className="text-sm text-blue-700 px-3 py-2 bg-blue-50 rounded-md border border-blue-200">
               Read-only (Signed)
             </span>
           )}
 
+          {forceEditable && (isDocumentSigned || hasSignature) && (
+            <span className="text-sm text-orange-700 px-3 py-2 bg-orange-50 rounded-md border border-orange-200">
+              Forced Edit Mode
+            </span>
+          )}
+
+          {/* Force Edit Button - only show when document is signed or has signatures */}
+          {shouldBeReadOnly && (
+            <button
+              onClick={handleForceEdit}
+              className="text-sm px-4 py-2 rounded-md transition whitespace-nowrap flex items-center gap-2 bg-orange-600 text-white hover:bg-orange-700"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              Force Edit
+            </button>
+          )}
+
           <button
             onClick={handleAddSignatureClick}
-            disabled={hasSignature}
+            disabled={shouldBeReadOnly}
             className={`text-sm px-5 py-2 rounded-md transition whitespace-nowrap flex items-center gap-2 ${
-              hasSignature
+              shouldBeReadOnly
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-green-600 text-white hover:bg-green-700"
             }`}
@@ -289,7 +352,7 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
           ref={editorRef}
           height="100%"
           serviceUrl="https://services.syncfusion.com/react/production/api/documenteditor/"
-          enableToolbar={!hasSignature}
+          enableToolbar={true}
           contentChange={handleContentChange}
         />
       </div>
@@ -310,9 +373,9 @@ const DocEditor: React.FC<DocEditorProps> = ({ sfdt, fileName }) => {
               Edit Signed Document?
             </h3>
             <p className="text-gray-600 mb-6">
-              This document contains signatures. Editing will remove all
-              existing signatures and make the document editable again. Do you
-              want to continue?
+              This document contains signatures or is marked as signed. Editing
+              will remove all existing signatures and make the document editable
+              again. Do you want to continue?
             </p>
             <div className="flex justify-end gap-3">
               <button

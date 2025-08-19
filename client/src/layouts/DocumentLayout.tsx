@@ -14,6 +14,7 @@ interface Version {
 export interface DocumentData {
   _id: string;
   title: string;
+  status?: string; // Add status field
   versions: Version[];
 }
 
@@ -62,6 +63,7 @@ const DocumentLayout = () => {
         <DocEditor
           sfdt={sfdtContent}
           fileName={documentData?.title || "Untitled"}
+          documentStatus={documentData?.status} // Pass the status
         />
       </div>
 
