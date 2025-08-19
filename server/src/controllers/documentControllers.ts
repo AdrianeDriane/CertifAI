@@ -158,6 +158,13 @@ export const updateDocument: RequestHandler = async (req, res) => {
 
     document.versions.push(newVersion);
     document.currentVersion = newVersion.version;
+
+    if (action === "signed") {
+      document.status = "signed";
+    } else if (action === "edited") {
+      document.status = "draft";
+    }
+
     await document.save();
 
     res.status(200).json({
