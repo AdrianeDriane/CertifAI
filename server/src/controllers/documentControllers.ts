@@ -134,6 +134,17 @@ export const updateDocument: RequestHandler = async (req, res) => {
         .json({ message: "Document to update is not found." });
     }
 
+    const isUserEditor =
+      document.createdBy.equals(user.id) ||
+      document.editors.some((editorId) => editorId.equals(user.id));
+
+    if (!isUserEditor) {
+      res
+        .status(403)
+        .json({ message: "User is not authorized to edit document." });
+      return;
+    }
+
     // Find latest version
     const latestVersion = document.versions.reduce((prev, curr) =>
       curr.version > prev.version ? curr : prev
