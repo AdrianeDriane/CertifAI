@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 interface IDeviceInfo {
   ip: string;
@@ -7,7 +7,7 @@ interface IDeviceInfo {
 
 interface IVersion {
   version: number;
-  action: 'uploaded' | 'edited' | 'signed' | 'locked';
+  action: "uploaded" | "edited" | "signed" | "locked";
   sfdt: any; // JSON format of the document (Syncfusion)
   hash: string;
   blockchainTxHash: string;
@@ -21,9 +21,10 @@ export interface IDocument extends Document {
   type?: string;
   createdBy: mongoose.Types.ObjectId;
   currentVersion: number;
-  status: 'draft' | 'signed' | 'archived';
-  visibility: 'private' | 'org' | 'public';
+  status: "draft" | "signed" | "locked";
+  visibility: "private" | "public";
   versions: IVersion[];
+  editors: mongoose.Types.ObjectId[]; // array of User IDs
 }
 
 const DeviceInfoSchema = new Schema<IDeviceInfo>(
@@ -39,14 +40,14 @@ const VersionSchema = new Schema<IVersion>(
     version: { type: Number, required: true },
     action: {
       type: String,
-      enum: ['uploaded', 'edited', 'signed', 'locked'],
+      enum: ["uploaded", "edited", "signed", "locked"],
       required: true,
     },
     sfdt: { type: Schema.Types.Mixed, required: true },
     hash: { type: String, required: true },
     blockchainTxHash: { type: String, required: true },
     createdAt: { type: Date, default: Date.now, required: true },
-    modifiedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    modifiedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     deviceInfo: { type: DeviceInfoSchema, required: false },
   },
   { _id: false }
@@ -56,22 +57,23 @@ const DocumentSchema = new Schema<IDocument>(
   {
     title: { type: String, required: true },
     type: { type: String },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     currentVersion: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['draft', 'signed', 'archived'],
-      default: 'draft',
+      enum: ["draft", "signed", "locked"],
+      default: "draft",
     },
     visibility: {
       type: String,
-      enum: ['private', 'org', 'public'],
-      default: 'private',
+      enum: ["private", "public"],
+      default: "private",
     },
+    editors: [{ type: Schema.Types.ObjectId, ref: "User" }],
     versions: { type: [VersionSchema], required: true },
   },
   { timestamps: true }
 );
 
-const DocumentModel = mongoose.model<IDocument>('Document', DocumentSchema);
+const DocumentModel = mongoose.model<IDocument>("Document", DocumentSchema);
 export default DocumentModel;
