@@ -206,30 +206,70 @@ export const updateDocument: RequestHandler = async (req, res) => {
   }
 };
 
-export const addEditorToDocument: RequestHandler = async (req, res) => {
+export const addEditorByEmail: RequestHandler = async (req, res) => {
   try {
-    const { document_id, editor_id } = req.params;
+    const { document_id } = req.params;
+    const { email } = req.body;
+    const user = req.user as { id: string };
+
+    if (!email) {
+      res.status(400).json({ message: "Email is required." });
+      return;
+    }
 
     const document = await DocumentModel.findById(document_id);
-
     if (!document) {
-      res.status(404).json({ message: "Document is not found." });
+      res.status(404).json({ message: "Document not found." });
       return;
     }
 
-    const editor = await User.findById(editor_id);
+    // Check if the current user is the creator
+    if (!document.createdBy.equals(user.id)) {
+      res.status(401).json({
+        message: "Only the document creator can add editors.",
+      });
+      return;
+    }
 
+    const editor = await User.findOne({ email: email.toLowerCase() });
     if (!editor) {
-      res.status(404).json({ message: "Editor/user is not found." });
+      res
+        .status(404)
+        .json({ message: "No user found with this email address." });
       return;
     }
 
-    document.editors.push(editor._id as Types.ObjectId);
+    // Check if user is already an editor
+    if (document.editors.includes(editor._id as Types.ObjectId)) {
+      res
+        .status(400)
+        .json({ message: "User is already an editor of this document." });
+      return;
+    }
 
+    // Check if user is the creator (can't add creator as editor)
+    if (!document.createdBy.equals(new mongoose.Types.ObjectId(user.id))) {
+      res
+        .status(400)
+        .json({ message: "Document creator cannot be added as an editor." });
+      return;
+    }
+
+    // Add editor to document
+    document.editors.push(editor._id as Types.ObjectId);
     await document.save();
-    res.status(200).json({ message: "Editor added successfully" });
+
+    // Return the user data for frontend state update
+    res.status(200).json({
+      message: "Editor added successfully",
+      user: {
+        _id: editor._id,
+        email: editor.email,
+        fullName: editor.fullName,
+      },
+    });
   } catch (error) {
-    console.error("Error adding editor to document: ", error);
+    console.error("Error adding editor by email: ", error);
     res.status(500).json({ message: "Error adding editor to document", error });
   }
 };
