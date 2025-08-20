@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import DocumentGenerator from "../features/documentGenerator/DocumentGenerator";
 import DocEditor from "../features/documentEditor/DocEditor";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { useParams } from "react-router-dom";
 import { getFingerprint } from "../utils/getFingerprint";
 import { getLatestSfdt } from "../utils/getLatestSfdt";
 
@@ -23,6 +22,7 @@ export interface DocumentData {
 }
 
 const DocumentLayout = () => {
+  document.getElementById('root')?.style.setProperty("max-width", "100%");
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [sfdtContent, setSfdtContent] = useState<string>("");
   const { documentId } = useParams<{ documentId: string }>();
@@ -45,6 +45,7 @@ const DocumentLayout = () => {
         );
         const doc: DocumentData = res.data;
         setDocumentData(doc);
+
         const latestSfdt = getLatestSfdt(doc);
         if (latestSfdt) {
           setSfdtContent(latestSfdt);
@@ -53,13 +54,13 @@ const DocumentLayout = () => {
         if (axios.isAxiosError(err) && err.response?.status === 403) {
           navigate("/403");
         } else if (axios.isAxiosError(err) && err.response?.status === 404) {
-          // TODO: add a 404 page
           navigate("/404");
         } else {
           console.error("Unexpected error fetching document:", err);
         }
       }
     };
+
     fetchDocument();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -77,12 +78,9 @@ const DocumentLayout = () => {
           createdBy={documentData?.createdBy}
         />
       </div>
+
       {/* Generator Sidebar */}
-      <div className="w-full md:w-[320px] max-h-screen overflow-y-auto bg-gray-50 border-t md:border-t-0 md:border-l border-gray-200">
-        <div className="h-full p-4">
-          <DocumentGenerator onDocumentGenerated={setSfdtContent} />
-        </div>
-      </div>
+      <DocumentGenerator onDocumentGenerated={setSfdtContent} />
     </div>
   );
 };

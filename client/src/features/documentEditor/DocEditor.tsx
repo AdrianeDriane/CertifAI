@@ -1,479 +1,589 @@
-import "../../App.css";
-import { useRef, useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import {
-  DocumentEditorContainerComponent,
-  Toolbar,
-} from "@syncfusion/ej2-react-documenteditor";
-import { getFingerprint } from "../../utils/getFingerprint";
-import axios from "axios";
-import SignatureModal from "../signature/SignatureModal";
-import DocumentSettings from "./DocumentSettings";
-import { useToast } from "../../hooks/useToast";
+  import "../../App.css";
+  import { useRef, useState, useEffect } from "react";
+  import { useParams } from "react-router-dom";
+  import {
+    DocumentEditorContainerComponent,
+    Toolbar,
+  } from "@syncfusion/ej2-react-documenteditor";
+  import { getFingerprint } from "../../utils/getFingerprint";
+  import axios from "axios";
+  import SignatureModal from "../signature/SignatureModal";
+  import DocumentSettings from "./DocumentSettings";
+  import { useToast } from "../../hooks/useToast";
+  import {
+    AlertTriangle,
+    FileSignature,
+    Lock,
+    Unlock,
+    Globe,
+    EyeOff,
+    Users,
+    Settings,
+    Pencil,
+    Plus,
+    Save,
+    Download,
+    List,
+    Fingerprint,
+    Clock, Hash, User, FileCode2
+  } from "lucide-react";
 
-DocumentEditorContainerComponent.Inject(Toolbar);
+  DocumentEditorContainerComponent.Inject(Toolbar);
 
-interface DocEditorProps {
-  sfdt: string | null;
-  fileName: string;
-  documentStatus?: string;
-  visibility?: "public" | "private";
-  editors?: string[];
-  createdBy?: string;
-}
+  interface DocEditorProps {
+    sfdt: string | null;
+    fileName: string;
+    documentStatus?: string;
+    visibility?: "public" | "private";
+    editors?: string[];
+    createdBy?: string;
+  }
 
-interface SignatureOptions {
-  dataUrl: string;
-  width: number;
-  height: number;
-}
+  interface SignatureOptions {
+    dataUrl: string;
+    width: number;
+    height: number;
+  }
 
-const DocEditor: React.FC<DocEditorProps> = ({
-  sfdt,
-  fileName,
-  documentStatus,
-  visibility = "private",
-  editors = [],
-  createdBy,
-}) => {
-  const editorRef = useRef<DocumentEditorContainerComponent>(null);
-  const { documentId } = useParams<{ documentId?: string }>();
-  const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [localFileName, setLocalFileName] = useState(fileName);
-  const [signatureCount, setSignatureCount] = useState(0);
-  const [hasSignature, setHasSignature] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-  const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
-  const [forceEditable, setForceEditable] = useState(false);
-  const [currentVisibility, setCurrentVisibility] = useState<
-    "public" | "private"
-  >(visibility);
-  const [currentEditors, setCurrentEditors] = useState<string[]>(editors);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
-  const { error } = useToast();
+  const DocEditor: React.FC<DocEditorProps> = ({
+    sfdt,
+    fileName,
+    documentStatus,
+    visibility = "private",
+    editors = [],
+    createdBy,
+  }) => {
+    const editorRef = useRef<DocumentEditorContainerComponent>(null);
+    const { documentId } = useParams<{ documentId?: string }>();
+    const [showSignatureModal, setShowSignatureModal] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [localFileName, setLocalFileName] = useState(fileName);
+    const [signatureCount, setSignatureCount] = useState(0);
+    const [hasSignature, setHasSignature] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
+    const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
+    const [forceEditable, setForceEditable] = useState(false);
+    const [currentVisibility, setCurrentVisibility] = useState<
+      "public" | "private"
+    >(visibility);
+    const [currentEditors, setCurrentEditors] = useState<string[]>(editors);
+    const [currentUserId, setCurrentUserId] = useState<string>("");
+    const { error } = useToast();
+    const [showLogs, setShowLogs] = useState(false);
+    const [logs, setLogs] = useState<any[]>([]);
+    const [loadingLogs, setLoadingLogs] = useState(false);
 
-  // Get current user ID on mount
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        setCurrentUserId(payload.id || payload.userId);
-      } catch (err) {
-        console.error("Error parsing token:", err);
-      }
-    }
-  }, []);
-
-  const isCreator = currentUserId && createdBy && currentUserId === createdBy;
-
-  // Check if document should be read-only
-  const isDocumentSigned = documentStatus === "signed";
-  const shouldBeReadOnly = (hasSignature || isDocumentSigned) && !forceEditable;
-
-  const insertSignature = (signatureOptions: SignatureOptions) => {
-    const editorObj = editorRef.current?.documentEditor;
-    if (editorObj) {
-      try {
-        // Ensure the editor is focused and ready
-        editorObj.focusIn();
-        // Insert the image with specified dimensions - using default placement
-        editorObj.editor.insertImage(
-          signatureOptions.dataUrl,
-          signatureOptions.width,
-          signatureOptions.height
-        );
-        // Increment signature counter and set signature state
-        setSignatureCount((prev) => prev + 1);
-        setHasSignature(true);
-        setIsDirty(true);
-        console.log(
-          `Signature ${signatureCount + 1} inserted successfully (${
-            signatureOptions.width
-          }x${signatureOptions.height})`
-        );
-        // Auto-save with "signed" action after signature insertion
-        setTimeout(() => {
-          saveChangesWithAction("signed");
-        }, 100);
-      } catch (error) {
-        console.error("Error inserting signature:", error);
-        // Fallback: try basic insertion without dimensions
+    // Get current user ID on mount
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      if (token) {
         try {
-          editorObj.editor.insertImage(signatureOptions.dataUrl);
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          setCurrentUserId(payload.id || payload.userId);
+        } catch (err) {
+          console.error("Error parsing token:", err);
+        }
+      }
+    }, []);
+    
+    const handleActivityLogs = async () => {
+      setLoadingLogs(true);
+      try {
+        const token = localStorage.getItem("token");
+        const fingerprint = await getFingerprint();
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/documents/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              "x-device-fingerprint": fingerprint,
+            },
+          }
+        );
+
+        const versions = response.data.documents[0].versions || 0 ;
+        console.log(versions)
+
+        setLogs(versions);
+      } catch (error) {
+        console.error("Error fetching activity logs:", error);
+      } finally {
+        setLoadingLogs(false);
+      }
+    };
+
+
+
+    const isCreator = currentUserId && createdBy && currentUserId === createdBy;
+
+    // Check if document should be read-only
+    const isDocumentSigned = documentStatus === "signed";
+    const shouldBeReadOnly = (hasSignature || isDocumentSigned) && !forceEditable;
+
+    const insertSignature = (signatureOptions: SignatureOptions) => {
+      const editorObj = editorRef.current?.documentEditor;
+      if (editorObj) {
+        try {
+          // Ensure the editor is focused and ready
+          editorObj.focusIn();
+          // Insert the image with specified dimensions - using default placement
+          editorObj.editor.insertImage(
+            signatureOptions.dataUrl,
+            signatureOptions.width,
+            signatureOptions.height
+          );
+          // Increment signature counter and set signature state
           setSignatureCount((prev) => prev + 1);
           setHasSignature(true);
           setIsDirty(true);
-          console.log("Signature inserted with basic method");
-          // Auto-save with "signed" action
+          console.log(
+            `Signature ${signatureCount + 1} inserted successfully (${
+              signatureOptions.width
+            }x${signatureOptions.height})`
+          );
+          // Auto-save with "signed" action after signature insertion
           setTimeout(() => {
             saveChangesWithAction("signed");
           }, 100);
-        } catch (fallbackError) {
-          console.error("Fallback insertion also failed:", fallbackError);
-          alert("Error inserting signature. Please try again.");
+        } catch (error) {
+          console.error("Error inserting signature:", error);
+          // Fallback: try basic insertion without dimensions
+          try {
+            editorObj.editor.insertImage(signatureOptions.dataUrl);
+            setSignatureCount((prev) => prev + 1);
+            setHasSignature(true);
+            setIsDirty(true);
+            console.log("Signature inserted with basic method");
+            // Auto-save with "signed" action
+            setTimeout(() => {
+              saveChangesWithAction("signed");
+            }, 100);
+          } catch (fallbackError) {
+            console.error("Fallback insertion also failed:", fallbackError);
+            alert("Error inserting signature. Please try again.");
+          }
         }
       }
-    }
-    setShowSignatureModal(false);
-  };
+      setShowSignatureModal(false);
+    };
 
-  const handleAddSignatureClick = () => {
-    if (isDirty) {
-      const shouldSave = window.confirm(
-        "You must save your changes before adding a signature. Save now?"
-      );
-      if (shouldSave) {
-        saveChangesWithAction("edited").then(() => {
-          setShowSignatureModal(true);
-        });
+    const handleAddSignatureClick = () => {
+      if (isDirty) {
+        const shouldSave = window.confirm(
+          "You must save your changes before adding a signature. Save now?"
+        );
+        if (shouldSave) {
+          saveChangesWithAction("edited").then(() => {
+            setShowSignatureModal(true);
+          });
+        }
+        return;
       }
-      return;
-    }
-    // If no unsaved changes, allow signature modal to open
-    setShowSignatureModal(true);
-  };
+      // If no unsaved changes, allow signature modal to open
+      setShowSignatureModal(true);
+    };
 
-  const handleContentChange = () => {
-    // If content changes and we have signatures or document is signed, show confirmation
-    if (
-      (hasSignature || isDocumentSigned) &&
-      !showEditConfirmDialog &&
-      !forceEditable
-    ) {
-      setShowEditConfirmDialog(true);
-      return;
-    }
-    // Otherwise, just mark as dirty
-    setIsDirty(true);
-  };
-
-  const handleEditConfirmation = (shouldContinue: boolean) => {
-    if (shouldContinue) {
-      // Clear signature state and re-enable editing
-      setHasSignature(false);
-      setSignatureCount(0);
+    const handleContentChange = () => {
+      // If content changes and we have signatures or document is signed, show confirmation
+      if (
+        (hasSignature || isDocumentSigned) &&
+        !showEditConfirmDialog &&
+        !forceEditable
+      ) {
+        setShowEditConfirmDialog(true);
+        return;
+      }
+      // Otherwise, just mark as dirty
       setIsDirty(true);
-      setForceEditable(true); // Force editing even if document status is signed
-      console.log("Signatures cleared, editing re-enabled");
-    }
-    setShowEditConfirmDialog(false);
-  };
+    };
 
-  const handleForceEdit = () => {
-    const shouldContinue = window.confirm(
-      "This will make the signed document editable. Any signatures will be invalidated. Do you want to continue?"
-    );
-    if (shouldContinue) {
-      setForceEditable(true);
-      setHasSignature(false);
-      setSignatureCount(0);
-      setIsDirty(true);
-      console.log("Document forced to editable mode");
-    }
-  };
-
-  useEffect(() => {
-    setLocalFileName(fileName);
-  }, [fileName]);
-
-  useEffect(() => {
-    setCurrentVisibility(visibility);
-    setCurrentEditors(editors);
-  }, [visibility, editors]);
-
-  // Load generated document
-  useEffect(() => {
-    if (sfdt && editorRef.current) {
-      try {
-        editorRef.current.documentEditor.open(sfdt);
-        // Reset states when loading new document
-        setIsDirty(false);
+    const handleEditConfirmation = (shouldContinue: boolean) => {
+      if (shouldContinue) {
+        // Clear signature state and re-enable editing
         setHasSignature(false);
         setSignatureCount(0);
-        setForceEditable(false); // Reset forced editing when loading new document
-      } catch (error) {
-        console.error("Error loading document:", error);
+        setIsDirty(true);
+        setForceEditable(true); // Force editing even if document status is signed
+        console.log("Signatures cleared, editing re-enabled");
       }
-    }
-  }, [sfdt]);
+      setShowEditConfirmDialog(false);
+    };
 
-  // Handle read-only state changes
-  useEffect(() => {
-    const editorObj = editorRef.current?.documentEditor;
-    const container = editorRef.current as any;
-    if (editorObj && container) {
-      editorObj.isReadOnly = shouldBeReadOnly;
-      container.showToolbar = !shouldBeReadOnly; // hide/show toolbar safely
-    }
-  }, [shouldBeReadOnly]);
+    const handleForceEdit = () => {
+      const shouldContinue = window.confirm(
+        "This will make the signed document editable. Any signatures will be invalidated. Do you want to continue?"
+      );
+      if (shouldContinue) {
+        setForceEditable(true);
+        setHasSignature(false);
+        setSignatureCount(0);
+        setIsDirty(true);
+        console.log("Document forced to editable mode");
+      }
+    };
 
-  const onSave = () => {
-    const editorObj = editorRef.current?.documentEditor;
-    if (editorObj) {
+    useEffect(() => {
+      setLocalFileName(fileName);
+    }, [fileName]);
+
+    useEffect(() => {
+      setCurrentVisibility(visibility);
+      setCurrentEditors(editors);
+    }, [visibility, editors]);
+
+    // Load generated document
+    useEffect(() => {
+      if (sfdt && editorRef.current) {
+        try {
+          editorRef.current.documentEditor.open(sfdt);
+          // Reset states when loading new document
+          setIsDirty(false);
+          setHasSignature(false);
+          setSignatureCount(0);
+          setForceEditable(false); // Reset forced editing when loading new document
+        } catch (error) {
+          console.error("Error loading document:", error);
+        }
+      }
+    }, [sfdt]);
+
+    // Handle read-only state changes
+    useEffect(() => {
+      const editorObj = editorRef.current?.documentEditor;
+      const container = editorRef.current as any;
+      if (editorObj && container) {
+        editorObj.isReadOnly = shouldBeReadOnly;
+        container.showToolbar = !shouldBeReadOnly; // hide/show toolbar safely
+      }
+    }, [shouldBeReadOnly]);
+
+    const onSave = () => {
+      const editorObj = editorRef.current?.documentEditor;
+      if (editorObj) {
+        try {
+          const sfdtContent = editorObj.serialize();
+          console.log("Saving document:", localFileName, documentId, sfdtContent);
+          editorObj.save(localFileName.trim() || "Untitled", "Docx");
+        } catch (error) {
+          console.error("Error saving document:", error);
+        }
+      }
+    };
+
+    const saveChanges = async () => {
+      return saveChangesWithAction("edited");
+    };
+
+    const saveChangesWithAction = async (action: "edited" | "signed") => {
+      const token = localStorage.getItem("token");
+      const fingerprint = await getFingerprint();
+      const editorObj = editorRef.current?.documentEditor;
+
+      if (!editorObj) {
+        console.error("Editor not available");
+        return;
+      }
+
       try {
         const sfdtContent = editorObj.serialize();
-        console.log("Saving document:", localFileName, documentId, sfdtContent);
-        editorObj.save(localFileName.trim() || "Untitled", "Docx");
-      } catch (error) {
-        console.error("Error saving document:", error);
-      }
-    }
-  };
-
-  const saveChanges = async () => {
-    return saveChangesWithAction("edited");
-  };
-
-  const saveChangesWithAction = async (action: "edited" | "signed") => {
-    const token = localStorage.getItem("token");
-    const fingerprint = await getFingerprint();
-    const editorObj = editorRef.current?.documentEditor;
-
-    if (!editorObj) {
-      console.error("Editor not available");
-      return;
-    }
-
-    try {
-      const sfdtContent = editorObj.serialize();
-      await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
-        { sfdt: sfdtContent, action },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "x-device-fingerprint": fingerprint,
-          },
+        await axios.put(
+          `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
+          { sfdt: sfdtContent, action },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              "x-device-fingerprint": fingerprint,
+            },
+          }
+        );
+        // Clear dirty flag after successful save
+        setIsDirty(false);
+        console.log(`Document saved successfully with action: ${action}`);
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 403) {
+          error("You are not authorized to edit the document.");
+        } else {
+          console.error("Unexpected error fetching document:", err);
         }
-      );
-      // Clear dirty flag after successful save
-      setIsDirty(false);
-      console.log(`Document saved successfully with action: ${action}`);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 403) {
-        error("You are not authorized to edit the document.");
-      } else {
-        console.error("Unexpected error fetching document:", err);
+        console.error("Error saving document:", err);
       }
-      console.error("Error saving document:", err);
-    }
-  };
+    };
 
-  return (
-    <div className="flex flex-col h-full w-full">
-      {/* Header */}
-      <div className="bg-gray-100 border-b px-4 py-3 flex justify-between items-center gap-3">
-        <input
-          type="text"
-          value={localFileName}
-          onChange={(e) => setLocalFileName(e.target.value)}
-          placeholder="Enter file name"
-          className="text-lg font-medium px-3 py-2 border border-gray-300 rounded-md flex-1 max-w-xs"
-          disabled={shouldBeReadOnly}
-        />
-        <div className="flex gap-2 items-center">
-          {/* Document Status Indicators */}
-          {isDirty && (
-            <span className="text-sm text-amber-600 px-3 py-2 bg-amber-50 rounded-md border border-amber-200">
-              Unsaved changes
-            </span>
-          )}
-          {signatureCount > 0 && (
-            <span className="text-sm text-green-700 px-3 py-2 bg-green-50 rounded-md border border-green-200">
-              Signatures: {signatureCount}
-            </span>
-          )}
-          {shouldBeReadOnly && (
-            <span className="text-sm text-blue-700 px-3 py-2 bg-blue-50 rounded-md border border-blue-200">
-              Read-only (Signed)
-            </span>
-          )}
-          {forceEditable && (isDocumentSigned || hasSignature) && (
-            <span className="text-sm text-orange-700 px-3 py-2 bg-orange-50 rounded-md border border-orange-200">
-              Forced Edit Mode
-            </span>
-          )}
 
-          {/* Visibility Indicator */}
-          <span
-            className={`text-sm px-3 py-2 rounded-md border ${
-              currentVisibility === "public"
-                ? "text-green-700 bg-green-50 border-green-200"
-                : "text-gray-700 bg-gray-50 border-gray-200"
-            }`}
-          >
-            {currentVisibility === "public" ? "🌐 Public" : "🔒 Private"}
-          </span>
-
-          {/* Editors Count */}
-          {currentEditors.length > 0 && (
-            <span className="text-sm text-purple-700 px-3 py-2 bg-purple-50 rounded-md border border-purple-200">
-              👥 {currentEditors.length} Editor
-              {currentEditors.length > 1 ? "s" : ""}
-            </span>
-          )}
-
-          {/* Settings Button - Only show for creator */}
-          {isCreator && (
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="text-sm px-4 py-2 rounded-md transition whitespace-nowrap flex items-center gap-2 bg-gray-600 text-white hover:bg-gray-700"
-              title="Document Settings"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              Settings
-            </button>
-          )}
-
-          {/* Force Edit Button - only show when document is signed or has signatures */}
-          {shouldBeReadOnly && (
-            <button
-              onClick={handleForceEdit}
-              className="text-sm px-4 py-2 rounded-md transition whitespace-nowrap flex items-center gap-2 bg-orange-600 text-white hover:bg-orange-700"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              Force Edit
-            </button>
-          )}
-
-          <button
-            onClick={handleAddSignatureClick}
+    return (
+      <div className="flex flex-col h-full w-full">
+        <div className="bg-gray-100 border-b px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+          {/* File Name */}
+          <input
+            type="text"
+            value={localFileName}
+            onChange={(e) => setLocalFileName(e.target.value)}
+            placeholder="Enter file name"
+            className="text-lg font-medium px-3 py-2 border border-gray-300 rounded-md flex-1 max-w-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
             disabled={shouldBeReadOnly}
-            className={`text-sm px-5 py-2 rounded-md transition whitespace-nowrap flex items-center gap-2 ${
-              shouldBeReadOnly
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-green-600 text-white hover:bg-green-700"
-            }`}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          />
+
+          {/* Status + Actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {isDirty && (
+              <span className="flex items-center gap-1 text-sm text-amber-700 px-3 py-1.5 bg-amber-50 rounded-md border border-amber-200">
+                <AlertTriangle size={16} /> Unsaved
+              </span>
+            )}
+            {signatureCount > 0 && (
+              <span className="flex items-center gap-1 text-sm text-green-700 px-3 py-1.5 bg-green-50 rounded-md border border-green-200">
+                <FileSignature size={16} /> {signatureCount}
+              </span>
+            )}
+            {shouldBeReadOnly && (
+              <span className="flex items-center gap-1 text-sm text-blue-700 px-3 py-1.5 bg-blue-50 rounded-md border border-blue-200">
+                <Lock size={16} /> Read-only
+              </span>
+            )}
+            {forceEditable && (isDocumentSigned || hasSignature) && (
+              <span className="flex items-center gap-1 text-sm text-orange-700 px-3 py-1.5 bg-orange-50 rounded-md border border-orange-200">
+                <Unlock size={16} /> Forced
+              </span>
+            )}
+
+            {/* Visibility */}
+            <span
+              className={`flex items-center gap-1 text-sm px-3 py-1.5 rounded-md border ${
+                currentVisibility === "public"
+                  ? "text-green-700 bg-green-50 border-green-200"
+                  : "text-gray-700 bg-gray-50 border-gray-200"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            Add Signature
-          </button>
+              {currentVisibility === "public" ? (
+                <>
+                  <Globe size={16} /> Public
+                </>
+              ) : (
+                <>
+                  <EyeOff size={16} /> Private
+                </>
+              )}
+            </span>
 
-          <button
-            onClick={saveChanges}
-            disabled={!isDirty}
-            className={`text-sm px-5 py-2 rounded-md transition whitespace-nowrap ${
-              isDirty
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            Save Changes
-          </button>
-          <button
-            onClick={onSave}
-            className="bg-blue-600 text-white text-sm px-5 py-2 rounded-md hover:bg-blue-700 transition whitespace-nowrap"
-          >
-            Export
-          </button>
-        </div>
-      </div>
+            {/* Editors */}
+            {currentEditors.length > 0 && (
+              <span className="flex items-center gap-1 text-sm text-purple-700 px-3 py-1.5 bg-purple-50 rounded-md border border-purple-200">
+                <Users size={16} /> {currentEditors.length}
+              </span>
+            )}
 
-      {/* Editor */}
-      <div className="flex-1 min-h-0">
-        <DocumentEditorContainerComponent
-          id="container"
-          ref={editorRef}
-          height="100%"
-          serviceUrl="https://services.syncfusion.com/react/production/api/documenteditor/"
-          enableToolbar={true}
-          contentChange={handleContentChange}
-        />
-      </div>
-
-      {/* Signature Modal */}
-      {showSignatureModal && (
-        <SignatureModal
-          onConfirm={insertSignature}
-          onCancel={() => setShowSignatureModal(false)}
-        />
-      )}
-
-      {/* Document Settings Modal */}
-      {showSettingsModal && documentId && (
-        <DocumentSettings
-          documentId={documentId}
-          currentVisibility={currentVisibility}
-          onClose={() => setShowSettingsModal(false)}
-        />
-      )}
-
-      {/* Edit Confirmation Dialog */}
-      {showEditConfirmDialog && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-[450px] max-w-[95vw]">
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">
-              Edit Signed Document?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              This document contains signatures or is marked as signed. Editing
-              will remove all existing signatures and make the document editable
-              again. Do you want to continue?
-            </p>
-            <div className="flex justify-end gap-3">
+            {/* Settings */}
+            {isCreator && (
               <button
-                onClick={() => handleEditConfirmation(false)}
-                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                onClick={() => setShowSettingsModal(true)}
+                className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700 transition"
               >
-                Cancel
+                <Settings size={16} /> Settings
               </button>
+            )}
+
+            {/* Force Edit */}
+            {shouldBeReadOnly && (
               <button
-                onClick={() => handleEditConfirmation(true)}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                onClick={handleForceEdit}
+                className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-orange-600 text-white hover:bg-orange-700 transition"
               >
-                Remove Signatures & Edit
+                <Pencil size={16} /> Force Edit
               </button>
-            </div>
+            )}
+
+            {/* Signature */}
+            <button
+              onClick={handleAddSignatureClick}
+              disabled={shouldBeReadOnly}
+              className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
+                shouldBeReadOnly
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700"
+              }`}
+            >
+              <Plus size={16} /> Signature
+            </button>
+
+            {/* Save */}
+            <button
+              onClick={saveChanges}
+              disabled={!isDirty}
+              className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
+                isDirty
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              <Save size={16} /> Save
+            </button>
+
+            {/* Export */}
+            <button
+              onClick={onSave}
+              className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+            >
+              <Download size={16} /> Export
+            </button>
+
+            {/* Activity Logs */}
+            {/* Activity Logs */}
+            <button
+              onClick={async () => {
+                await handleActivityLogs();
+                setShowLogs(true); // ✅ open modal after fetching
+              }}
+              className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition"
+            >
+              <List size={16} /> Logs
+            </button>
           </div>
         </div>
-      )}
-    </div>
-  );
-};
+        
+         {/* Logs Modal */}
+          {showLogs && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+              <div className="bg-white p-6 rounded-2xl shadow-xl w-[650px] max-h-[80vh] overflow-y-auto">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    📜 Activity Logs
+                  </h2>
+                  <button
+                    onClick={() => setShowLogs(false)}
+                    className="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 transition"
+                  >
+                    ✕
+                  </button>
+                </div>
 
-export default DocEditor;
+                {/* Logs List */}
+                {logs.length > 0 ? (
+                  <ul className="space-y-4">
+                    {logs.map((log, idx) => {
+                      const { sfdt, ...displayLog } = log;
+
+                      return (
+                        <li
+                          key={idx}
+                          className="border rounded-xl bg-gray-50 p-4 shadow-sm hover:shadow-md transition"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-700 font-medium">
+                              {displayLog.action.toUpperCase()}
+                            </span>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <Clock size={14} />{" "}
+                              {new Date(displayLog.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+
+                          <p className="flex items-center gap-2 text-sm text-gray-700">
+                            <User size={16} /> Modified By:{" "}
+                            <span className="font-medium">{displayLog.modifiedBy}</span>
+                          </p>
+                          <p className="flex items-center gap-2 text-sm text-gray-700">
+                            <FileCode2 size={16} /> Version:{" "}
+                            <span className="font-medium">{displayLog.version}</span>
+                          </p>
+
+                          {displayLog.blockchainTxHash && (
+                            <p className="flex items-center gap-2 text-sm text-gray-700">
+                              <Hash size={16} /> Blockchain Tx:{" "}
+                              <a
+                                href={`https://etherscan.io/tx/${displayLog.blockchainTxHash}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline hover:text-blue-800"
+                              >
+                                {displayLog.blockchainTxHash.slice(0, 10)}...
+                              </a>
+                            </p>
+                          )}
+
+                          <p className="flex items-center gap-2 text-sm text-gray-700">
+                            <Hash size={16} /> Hash:{" "}
+                            <span className="font-mono text-xs text-gray-600">
+                              {displayLog.hash}
+                            </span>
+                          </p>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-center py-6">
+                    No activity logs found.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+        {/* Editor */}
+        <div className="flex-1 min-h-0">
+          <DocumentEditorContainerComponent
+            id="container"
+            ref={editorRef}
+            width="100%"
+            height="100%"
+            serviceUrl="https://services.syncfusion.com/react/production/api/documenteditor/"
+            enableToolbar={true}
+            contentChange={handleContentChange}
+          />
+        </div>
+
+        {/* Signature Modal */}
+        {showSignatureModal && (
+          <SignatureModal
+            onConfirm={insertSignature}
+            onCancel={() => setShowSignatureModal(false)}
+          />
+        )}
+
+        {/* Document Settings Modal */}
+        {showSettingsModal && documentId && (
+          <DocumentSettings
+            documentId={documentId}
+            currentVisibility={currentVisibility}
+            onClose={() => setShowSettingsModal(false)}
+          />
+        )}
+
+        {/* Edit Confirmation Dialog */}
+        {showEditConfirmDialog && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded-xl shadow-lg w-[450px] max-w-[95vw]">
+              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                Edit Signed Document?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                This document contains signatures or is marked as signed. Editing
+                will remove all existing signatures and make the document editable
+                again. Do you want to continue?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => handleEditConfirmation(false)}
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleEditConfirmation(true)}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  Remove Signatures & Edit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  export default DocEditor;
