@@ -257,7 +257,10 @@ export const addEditorByEmail: RequestHandler = async (req, res) => {
 
     // Add editor to document
     document.editors.push(editor._id as Types.ObjectId);
+    editor.documents?.push(new mongoose.Types.ObjectId(document_id));
+
     await document.save();
+    await editor.save();
 
     // Return the user data for frontend state update
     res.status(200).json({
