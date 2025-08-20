@@ -205,6 +205,43 @@ export const addEditorToDocument: RequestHandler = async (req, res) => {
   }
 };
 
+export const modifyDocumentVisibility: RequestHandler = async (req, res) => {
+  try {
+    const user = req.user as { id: string };
+    const { document_id } = req.params;
+    const { visibility } = req.body;
+
+    const document = await DocumentModel.findById(document_id);
+
+    if (!document) {
+      res.status(404).json({ message: "Document is not found." });
+      return;
+    }
+
+    if (document.createdBy !== new mongoose.Types.ObjectId(user.id)) {
+      res.status(401).json({
+        message: "User is unauthorized to modify document's visibility.",
+      });
+      return;
+    }
+
+    document.visibility = visibility;
+    await document.save();
+
+    res.status(200).json({
+      message: "Document visibility modified successfully",
+      visibility,
+    });
+    return;
+  } catch (error) {
+    console.error("Error modifying document's visibility", error);
+    res
+      .status(500)
+      .json({ message: "Error modifying document's visibility", error });
+    return;
+  }
+};
+
 export const verifyDocumentVersion: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params as { id: string };
