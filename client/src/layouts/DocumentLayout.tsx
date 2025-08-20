@@ -15,7 +15,10 @@ interface Version {
 export interface DocumentData {
   _id: string;
   title: string;
-  status?: string; // Add status field
+  status?: string;
+  visibility?: "public" | "private";
+  editors?: string[];
+  createdBy?: string;
   versions: Version[];
 }
 
@@ -23,14 +26,12 @@ const DocumentLayout = () => {
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [sfdtContent, setSfdtContent] = useState<string>("");
   const { documentId } = useParams<{ documentId: string }>();
-
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDocument = async () => {
       const token = localStorage.getItem("token");
       const fingerprint = await getFingerprint();
-
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
@@ -42,10 +43,8 @@ const DocumentLayout = () => {
             },
           }
         );
-
         const doc: DocumentData = res.data;
         setDocumentData(doc);
-
         const latestSfdt = getLatestSfdt(doc);
         if (latestSfdt) {
           setSfdtContent(latestSfdt);
@@ -61,7 +60,6 @@ const DocumentLayout = () => {
         }
       }
     };
-
     fetchDocument();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -73,10 +71,12 @@ const DocumentLayout = () => {
         <DocEditor
           sfdt={sfdtContent}
           fileName={documentData?.title || "Untitled"}
-          documentStatus={documentData?.status} // Pass the status
+          documentStatus={documentData?.status}
+          visibility={documentData?.visibility || "private"}
+          editors={documentData?.editors || []}
+          createdBy={documentData?.createdBy}
         />
       </div>
-
       {/* Generator Sidebar */}
       <div className="w-full md:w-[320px] max-h-screen overflow-y-auto bg-gray-50 border-t md:border-t-0 md:border-l border-gray-200">
         <div className="h-full p-4">

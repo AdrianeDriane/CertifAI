@@ -8,6 +8,7 @@ import {
 import { getFingerprint } from "../../utils/getFingerprint";
 import axios from "axios";
 import SignatureModal from "../signature/SignatureModal";
+import DocumentSettings from "./DocumentSettings";
 import { useToast } from "../../hooks/useToast";
 
 DocumentEditorContainerComponent.Inject(Toolbar);
@@ -16,6 +17,9 @@ interface DocEditorProps {
   sfdt: string | null;
   fileName: string;
   documentStatus?: string;
+  visibility?: "public" | "private";
+  editors?: string[];
+  createdBy?: string;
 }
 
 interface SignatureOptions {
@@ -28,17 +32,41 @@ const DocEditor: React.FC<DocEditorProps> = ({
   sfdt,
   fileName,
   documentStatus,
+  visibility = "private",
+  editors = [],
+  createdBy,
 }) => {
   const editorRef = useRef<DocumentEditorContainerComponent>(null);
   const { documentId } = useParams<{ documentId?: string }>();
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [localFileName, setLocalFileName] = useState(fileName);
   const [signatureCount, setSignatureCount] = useState(0);
   const [hasSignature, setHasSignature] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
-  const [forceEditable, setForceEditable] = useState(false); // New state for forced editing
+  const [forceEditable, setForceEditable] = useState(false);
+  const [currentVisibility, setCurrentVisibility] = useState<
+    "public" | "private"
+  >(visibility);
+  const [currentEditors, setCurrentEditors] = useState<string[]>(editors);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const { error } = useToast();
+
+  // Get current user ID on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setCurrentUserId(payload.id || payload.userId);
+      } catch (err) {
+        console.error("Error parsing token:", err);
+      }
+    }
+  }, []);
+
+  const isCreator = currentUserId && createdBy && currentUserId === createdBy;
 
   // Check if document should be read-only
   const isDocumentSigned = documentStatus === "signed";
@@ -50,41 +78,34 @@ const DocEditor: React.FC<DocEditorProps> = ({
       try {
         // Ensure the editor is focused and ready
         editorObj.focusIn();
-
         // Insert the image with specified dimensions - using default placement
         editorObj.editor.insertImage(
           signatureOptions.dataUrl,
           signatureOptions.width,
           signatureOptions.height
         );
-
         // Increment signature counter and set signature state
         setSignatureCount((prev) => prev + 1);
         setHasSignature(true);
         setIsDirty(true);
-
         console.log(
           `Signature ${signatureCount + 1} inserted successfully (${
             signatureOptions.width
           }x${signatureOptions.height})`
         );
-
         // Auto-save with "signed" action after signature insertion
         setTimeout(() => {
           saveChangesWithAction("signed");
         }, 100);
       } catch (error) {
         console.error("Error inserting signature:", error);
-
         // Fallback: try basic insertion without dimensions
         try {
           editorObj.editor.insertImage(signatureOptions.dataUrl);
           setSignatureCount((prev) => prev + 1);
           setHasSignature(true);
           setIsDirty(true);
-
           console.log("Signature inserted with basic method");
-
           // Auto-save with "signed" action
           setTimeout(() => {
             saveChangesWithAction("signed");
@@ -110,7 +131,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
       }
       return;
     }
-
     // If no unsaved changes, allow signature modal to open
     setShowSignatureModal(true);
   };
@@ -125,7 +145,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
       setShowEditConfirmDialog(true);
       return;
     }
-
     // Otherwise, just mark as dirty
     setIsDirty(true);
   };
@@ -137,10 +156,8 @@ const DocEditor: React.FC<DocEditorProps> = ({
       setSignatureCount(0);
       setIsDirty(true);
       setForceEditable(true); // Force editing even if document status is signed
-
       console.log("Signatures cleared, editing re-enabled");
     }
-
     setShowEditConfirmDialog(false);
   };
 
@@ -148,7 +165,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
     const shouldContinue = window.confirm(
       "This will make the signed document editable. Any signatures will be invalidated. Do you want to continue?"
     );
-
     if (shouldContinue) {
       setForceEditable(true);
       setHasSignature(false);
@@ -161,6 +177,11 @@ const DocEditor: React.FC<DocEditorProps> = ({
   useEffect(() => {
     setLocalFileName(fileName);
   }, [fileName]);
+
+  useEffect(() => {
+    setCurrentVisibility(visibility);
+    setCurrentEditors(editors);
+  }, [visibility, editors]);
 
   // Load generated document
   useEffect(() => {
@@ -182,7 +203,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
   useEffect(() => {
     const editorObj = editorRef.current?.documentEditor;
     const container = editorRef.current as any;
-
     if (editorObj && container) {
       editorObj.isReadOnly = shouldBeReadOnly;
       container.showToolbar = !shouldBeReadOnly; // hide/show toolbar safely
@@ -218,7 +238,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
 
     try {
       const sfdtContent = editorObj.serialize();
-
       await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
         { sfdt: sfdtContent, action },
@@ -230,10 +249,8 @@ const DocEditor: React.FC<DocEditorProps> = ({
           },
         }
       );
-
       // Clear dirty flag after successful save
       setIsDirty(false);
-
       console.log(`Document saved successfully with action: ${action}`);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 403) {
@@ -257,30 +274,76 @@ const DocEditor: React.FC<DocEditorProps> = ({
           className="text-lg font-medium px-3 py-2 border border-gray-300 rounded-md flex-1 max-w-xs"
           disabled={shouldBeReadOnly}
         />
-
         <div className="flex gap-2 items-center">
+          {/* Document Status Indicators */}
           {isDirty && (
             <span className="text-sm text-amber-600 px-3 py-2 bg-amber-50 rounded-md border border-amber-200">
               Unsaved changes
             </span>
           )}
-
           {signatureCount > 0 && (
             <span className="text-sm text-green-700 px-3 py-2 bg-green-50 rounded-md border border-green-200">
               Signatures: {signatureCount}
             </span>
           )}
-
           {shouldBeReadOnly && (
             <span className="text-sm text-blue-700 px-3 py-2 bg-blue-50 rounded-md border border-blue-200">
               Read-only (Signed)
             </span>
           )}
-
           {forceEditable && (isDocumentSigned || hasSignature) && (
             <span className="text-sm text-orange-700 px-3 py-2 bg-orange-50 rounded-md border border-orange-200">
               Forced Edit Mode
             </span>
+          )}
+
+          {/* Visibility Indicator */}
+          <span
+            className={`text-sm px-3 py-2 rounded-md border ${
+              currentVisibility === "public"
+                ? "text-green-700 bg-green-50 border-green-200"
+                : "text-gray-700 bg-gray-50 border-gray-200"
+            }`}
+          >
+            {currentVisibility === "public" ? "🌐 Public" : "🔒 Private"}
+          </span>
+
+          {/* Editors Count */}
+          {currentEditors.length > 0 && (
+            <span className="text-sm text-purple-700 px-3 py-2 bg-purple-50 rounded-md border border-purple-200">
+              👥 {currentEditors.length} Editor
+              {currentEditors.length > 1 ? "s" : ""}
+            </span>
+          )}
+
+          {/* Settings Button - Only show for creator */}
+          {isCreator && (
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="text-sm px-4 py-2 rounded-md transition whitespace-nowrap flex items-center gap-2 bg-gray-600 text-white hover:bg-gray-700"
+              title="Document Settings"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              Settings
+            </button>
           )}
 
           {/* Force Edit Button - only show when document is signed or has signatures */}
@@ -342,7 +405,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
           >
             Save Changes
           </button>
-
           <button
             onClick={onSave}
             className="bg-blue-600 text-white text-sm px-5 py-2 rounded-md hover:bg-blue-700 transition whitespace-nowrap"
@@ -369,6 +431,15 @@ const DocEditor: React.FC<DocEditorProps> = ({
         <SignatureModal
           onConfirm={insertSignature}
           onCancel={() => setShowSignatureModal(false)}
+        />
+      )}
+
+      {/* Document Settings Modal */}
+      {showSettingsModal && documentId && (
+        <DocumentSettings
+          documentId={documentId}
+          currentVisibility={currentVisibility}
+          onClose={() => setShowSettingsModal(false)}
         />
       )}
 
