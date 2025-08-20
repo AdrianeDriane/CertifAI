@@ -81,6 +81,7 @@ export const getDocuments: RequestHandler = async (req, res) => {
 
 export const getDocumentById: RequestHandler = async (req, res) => {
   try {
+    const user = req.user as { id: string };
     const { document_id } = req.params;
 
     const document = await DocumentModel.findById(document_id);
@@ -90,7 +91,24 @@ export const getDocumentById: RequestHandler = async (req, res) => {
       return;
     }
 
+    if (document.visibility === "public") {
+      res.status(200).json(document);
+      return;
+    }
+
+    const isUserEditor =
+      document.createdBy.equals(user.id) ||
+      document.editors.some((editorId) => editorId.equals(user.id));
+
+    if (!isUserEditor) {
+      res
+        .status(403)
+        .json({ message: "User is not authorized to view document." });
+      return;
+    }
+
     res.status(200).json(document);
+    return;
   } catch (error) {
     console.error("Error fetching document: ", error);
     res.status(500).json({ message: "Error fetching document", error });
