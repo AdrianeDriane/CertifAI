@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import DocumentModel from "../models/Document";
 import { IAuthenticatedRequest } from "../types/IAuthenticatedRequest";
 import User from "../models/User";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { hashSfdt } from "../utils/hash";
 import { readTxDataAsString, storeHashOnPolygon } from "../utils/blockchain";
 
@@ -177,32 +177,41 @@ export const updateDocument: RequestHandler = async (req, res) => {
   }
 };
 
-// TODO: Use this with the newly added featrue Document Verification in MVP
+export const addEditorToDocument: RequestHandler = async (req, res) => {
+  try {
+    const { document_id, editor_id } = req.params;
+
+    const document = await DocumentModel.findById(document_id);
+
+    if (!document) {
+      res.status(404).json({ message: "Document is not found." });
+      return;
+    }
+
+    const editor = await User.findById(editor_id);
+
+    if (!editor) {
+      res.status(404).json({ message: "Editor/user is not found." });
+      return;
+    }
+
+    document.editors.push(editor._id as Types.ObjectId);
+
+    await document.save();
+    res.status(200).json({ message: "Editor added successfully" });
+  } catch (error) {
+    console.error("Error adding editor to document: ", error);
+    res.status(500).json({ message: "Error adding editor to document", error });
+  }
+};
+
 export const verifyDocumentVersion: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params as { id: string }; // safe cast
-    const { version } = req.query as { version?: string };
+    const { id } = req.params as { id: string };
 
+    // TODO: do this flow - compares the hashed sfdt content of the uploaded docx file to all hashed sfdt string being put in each blockchain transaction hash history
     const doc = await DocumentModel.findById(id);
     if (!doc) return res.status(404).json({ error: "Document not found" });
-
-    const verNum = Number(version ?? doc.currentVersion);
-    const versionEntry = doc.versions.find((v) => v.version === verNum);
-    if (!versionEntry)
-      return res.status(404).json({ error: "Version not found" });
-
-    const localHash = hashSfdt(versionEntry.sfdt);
-    const onChainDataStr = await readTxDataAsString(
-      versionEntry.blockchainTxHash
-    );
-
-    res.json({
-      documentId: id,
-      version: verNum,
-      localHash,
-      onChainHashInTxData: onChainDataStr,
-      matches: localHash === onChainDataStr,
-    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Verification failed" });
