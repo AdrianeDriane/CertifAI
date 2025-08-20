@@ -8,6 +8,7 @@ import {
 import { getFingerprint } from "../../utils/getFingerprint";
 import axios from "axios";
 import SignatureModal from "../signature/SignatureModal";
+import { useToast } from "../../hooks/useToast";
 
 DocumentEditorContainerComponent.Inject(Toolbar);
 
@@ -37,6 +38,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
   const [isDirty, setIsDirty] = useState(false);
   const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
   const [forceEditable, setForceEditable] = useState(false); // New state for forced editing
+  const { error } = useToast();
 
   // Check if document should be read-only
   const isDocumentSigned = documentStatus === "signed";
@@ -234,6 +236,11 @@ const DocEditor: React.FC<DocEditorProps> = ({
 
       console.log(`Document saved successfully with action: ${action}`);
     } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        error("You are not authorized to edit the document.");
+      } else {
+        console.error("Unexpected error fetching document:", err);
+      }
       console.error("Error saving document:", err);
     }
   };
