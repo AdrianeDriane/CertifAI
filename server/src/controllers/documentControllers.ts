@@ -236,7 +236,7 @@ export const modifyDocumentVisibility: RequestHandler = async (req, res) => {
       return;
     }
 
-    if (document.createdBy !== new mongoose.Types.ObjectId(user.id)) {
+    if (!document.createdBy.equals(user.id)) {
       res.status(401).json({
         message: "User is unauthorized to modify document's visibility.",
       });
