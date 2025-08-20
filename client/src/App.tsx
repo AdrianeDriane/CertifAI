@@ -7,6 +7,7 @@ import { PrivateRoute } from "./components/auth/PrivateRoute";
 import DocumentLayout from "./layouts/DocumentLayout";
 import DocumentsPage from "./features/documentEditor/DocumentsPage";
 import { LandingPage } from "./features/landing/pages/LandingPage";
+import Error403Page from "./features/errors/pages/Error403Page";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/403" element={<Error403Page />} />
 
       {/* Protected Routes (User Side) */}
       <Route

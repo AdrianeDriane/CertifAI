@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import DocumentGenerator from "../features/documentGenerator/DocumentGenerator";
 import DocEditor from "../features/documentEditor/DocEditor";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { getFingerprint } from "../utils/getFingerprint";
@@ -22,6 +23,8 @@ const DocumentLayout = () => {
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [sfdtContent, setSfdtContent] = useState<string>("");
   const { documentId } = useParams<{ documentId: string }>();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -48,7 +51,14 @@ const DocumentLayout = () => {
           setSfdtContent(latestSfdt);
         }
       } catch (err) {
-        console.error("Error fetching document:", err);
+        if (axios.isAxiosError(err) && err.response?.status === 403) {
+          navigate("/403");
+        } else if (axios.isAxiosError(err) && err.response?.status === 404) {
+          // TODO: add a 404 page
+          navigate("/404");
+        } else {
+          console.error("Unexpected error fetching document:", err);
+        }
       }
     };
 
