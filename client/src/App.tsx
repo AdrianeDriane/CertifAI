@@ -8,47 +8,54 @@ import DocumentLayout from "./layouts/DocumentLayout";
 import DocumentsPage from "./features/documentEditor/DocumentsPage";
 import { LandingPage } from "./features/landing/pages/LandingPage";
 import Error403Page from "./features/errors/pages/Error403Page";
+import { useToast } from "./hooks/useToast";
+import { ToastContainer } from "./components/Toast";
 
 function App() {
+  const { toasts, removeToast } = useToast();
+
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/403" element={<Error403Page />} />
+    <>
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/403" element={<Error403Page />} />
 
-      {/* Protected Routes (User Side) */}
-      <Route
-        path="/home"
-        element={
-          <PrivateRoute>
-            <Home />
-          </PrivateRoute>
-        }
-      />
+        {/* Protected Routes (User Side) */}
+        <Route
+          path="/home"
+          element={
+            <PrivateRoute>
+              <Home />
+            </PrivateRoute>
+          }
+        />
 
-      {/* Document Layout with nested routes */}
-      <Route
-        path="/documents"
-        element={
-          <PrivateRoute>
-            <DocumentsPage />
-          </PrivateRoute>
-        }
-      />
+        {/* Document Layout with nested routes */}
+        <Route
+          path="/documents"
+          element={
+            <PrivateRoute>
+              <DocumentsPage />
+            </PrivateRoute>
+          }
+        />
 
-      <Route
-        path="/document-editor/:documentId"
-        element={
-          <PrivateRoute>
-            <DocumentLayout />
-          </PrivateRoute>
-        }
-      />
+        <Route
+          path="/document-editor/:documentId"
+          element={
+            <PrivateRoute>
+              <DocumentLayout />
+            </PrivateRoute>
+          }
+        />
 
-      {/* User Side */}
-      <Route path="/login/success" element={<LoginSuccess />} />
-    </Routes>
+        {/* User Side */}
+        <Route path="/login/success" element={<LoginSuccess />} />
+      </Routes>
+    </>
   );
 }
 
