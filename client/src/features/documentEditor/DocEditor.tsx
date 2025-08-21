@@ -104,7 +104,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
       );
 
       const versions = response.data.versions;
-      console.log(versions);
 
       setLogs(versions);
     } catch (error) {
