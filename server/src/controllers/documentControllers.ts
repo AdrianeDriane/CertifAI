@@ -117,7 +117,7 @@ export const getDocumentById: RequestHandler = async (req, res) => {
 
 export const updateDocument: RequestHandler = async (req, res) => {
   try {
-    const user = req.user as { id: string };
+    const user = req.user as { id: string; email: string };
     const { document_id } = req.params;
     const { sfdt, action = "edited" } = req.body;
 
@@ -183,6 +183,7 @@ export const updateDocument: RequestHandler = async (req, res) => {
       blockchainTxHash,
       createdAt: new Date(),
       modifiedBy: new mongoose.Types.ObjectId(modifiedBy),
+      emailModifiedBy: user.email,
     };
 
     document.versions.push(newVersion);

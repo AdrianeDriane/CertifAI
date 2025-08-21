@@ -14,6 +14,7 @@ interface IVersion {
   createdAt: Date;
   modifiedBy: mongoose.Types.ObjectId;
   deviceInfo?: IDeviceInfo;
+  emailModifiedBy: string;
 }
 
 export interface IDocument extends Document {
@@ -48,6 +49,7 @@ const VersionSchema = new Schema<IVersion>(
     blockchainTxHash: { type: String, required: true },
     createdAt: { type: Date, default: Date.now, required: true },
     modifiedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    emailModifiedBy: { type: String, required: false },
     deviceInfo: { type: DeviceInfoSchema, required: false },
   },
   { _id: false }

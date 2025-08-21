@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
   DocumentEditorContainerComponent,
+  DocumentEditorContainer,
   Toolbar,
 } from "@syncfusion/ej2-react-documenteditor";
 import { getFingerprint } from "../../utils/getFingerprint";
@@ -258,12 +259,64 @@ const DocEditor: React.FC<DocEditorProps> = ({
     const editorObj = editorRef.current?.documentEditor;
     if (editorObj) {
       try {
-        const sfdtContent = editorObj.serialize();
-        console.log("Saving document:", localFileName, documentId, sfdtContent);
         editorObj.save(localFileName.trim() || "Untitled", "Docx");
       } catch (error) {
         console.error("Error saving document:", error);
       }
+    }
+  };
+
+  const onSaveCopyFromLog = async (logEntry: any) => {
+    try {
+      // Hacky way: hidden container element
+      const hiddenContainer = document.createElement("div");
+      hiddenContainer.style.position = "absolute";
+      hiddenContainer.style.left = "-9999px";
+      hiddenContainer.style.width = "100px";
+      hiddenContainer.style.height = "100px";
+      hiddenContainer.id = "temp-editor-" + Date.now();
+      document.body.appendChild(hiddenContainer);
+
+      const tempEditorContainer = new DocumentEditorContainer({
+        enableToolbar: false,
+        height: "100px",
+      });
+
+      DocumentEditorContainer.Inject(Toolbar);
+
+      // Appending to hidden container
+      tempEditorContainer.appendTo(hiddenContainer);
+
+      // Parsing of SFDT content
+      let sfdtContent;
+      if (typeof logEntry.sfdt === "string") {
+        try {
+          sfdtContent = JSON.parse(logEntry.sfdt);
+        } catch (parseError) {
+          console.error("Error parsing SFDT string:", parseError);
+          alert("Invalid document format. Cannot download this version.");
+          return;
+        }
+      } else {
+        sfdtContent = logEntry.sfdt;
+      }
+
+      tempEditorContainer.documentEditor.open(sfdtContent);
+
+      const timestamp = new Date(logEntry.createdAt).toISOString().slice(0, 10);
+      const versionFileName = `${localFileName}_v${logEntry.version}_${timestamp}_${logEntry.action}`;
+
+      tempEditorContainer.documentEditor.save(versionFileName, "Docx");
+
+      console.log(`Downloaded version ${logEntry.version} successfully`);
+
+      setTimeout(() => {
+        tempEditorContainer.destroy();
+        document.body.removeChild(hiddenContainer);
+      }, 1000);
+    } catch (error) {
+      console.error("Error downloading document version:", error);
+      alert("Failed to download document version. Please try again.");
     }
   };
 
@@ -478,7 +531,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
                       <p className="flex items-center gap-2 text-sm text-gray-700">
                         <User size={16} /> Modified By:{" "}
                         <span className="font-medium">
-                          {displayLog.modifiedBy}
+                          {displayLog.emailModifiedBy}
                         </span>
                       </p>
                       <p className="flex items-center gap-2 text-sm text-gray-700">
@@ -508,6 +561,19 @@ const DocEditor: React.FC<DocEditorProps> = ({
                           {displayLog.hash}
                         </span>
                       </p>
+
+                      {/* ✅ Minimal Download Button */}
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          onClick={() => {
+                            onSaveCopyFromLog(log);
+                          }}
+                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition"
+                        >
+                          <Download size={14} />
+                          Download Document
+                        </button>
+                      </div>
                     </li>
                   );
                 })}
