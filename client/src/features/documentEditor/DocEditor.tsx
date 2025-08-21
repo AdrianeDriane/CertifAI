@@ -545,7 +545,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
                         <p className="flex items-center gap-2 text-sm text-gray-700">
                           <Hash size={16} /> Blockchain Tx:{" "}
                           <a
-                            href={`https://etherscan.io/tx/${displayLog.blockchainTxHash}`}
+                            href={`https://amoy.polygonscan.com/tx/${displayLog.blockchainTxHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 underline hover:text-blue-800"
