@@ -145,6 +145,12 @@ export const updateDocument: RequestHandler = async (req, res) => {
       return;
     }
 
+    if (document.status === "locked") {
+      res.status(423).json({
+        message: "Document is locked. Cannot modify.",
+      });
+    }
+
     // Find latest version
     const latestVersion = document.versions.reduce((prev, curr) =>
       curr.version > prev.version ? curr : prev
