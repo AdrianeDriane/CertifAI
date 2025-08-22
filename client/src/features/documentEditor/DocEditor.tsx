@@ -33,6 +33,7 @@ import {
   FileCheck,
   CheckCircle,
   Archive,
+  ChevronDown,
 } from "lucide-react";
 
 import DocumentComparisonModal from "./DocumentComparisonModal";
@@ -79,7 +80,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
   >(visibility);
   const [currentEditors, setCurrentEditors] = useState<string[]>(editors);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  // Add state for document status
   const [currentDocumentStatus, setCurrentDocumentStatus] = useState<string>(
     documentStatus || "draft"
   );
@@ -87,6 +87,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
   const [showLogs, setShowLogs] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
 
   // Get current user ID on mount
   useEffect(() => {
@@ -123,7 +124,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
       );
 
       const versions = response.data.versions;
-
       setLogs(versions);
     } catch (error) {
       console.error("Error fetching activity logs:", error);
@@ -141,22 +141,19 @@ const DocEditor: React.FC<DocEditorProps> = ({
   // Handle document locked callback
   const handleDocumentLocked = () => {
     setCurrentDocumentStatus("locked");
-    setForceEditable(false); // Disable force edit when document is locked
+    setForceEditable(false);
   };
 
   const insertSignature = (signatureOptions: SignatureOptions) => {
     const editorObj = editorRef.current?.documentEditor;
     if (editorObj) {
       try {
-        // Ensure the editor is focused and ready
         editorObj.focusIn();
-        // Insert the image with specified dimensions - using default placement
         editorObj.editor.insertImage(
           signatureOptions.dataUrl,
           signatureOptions.width,
           signatureOptions.height
         );
-        // Increment signature counter and set signature state
         setSignatureCount((prev) => prev + 1);
         setHasSignature(true);
         setIsDirty(true);
@@ -165,20 +162,17 @@ const DocEditor: React.FC<DocEditorProps> = ({
             signatureOptions.width
           }x${signatureOptions.height})`
         );
-        // Auto-save with "signed" action after signature insertion
         setTimeout(() => {
           saveChangesWithAction("signed");
         }, 100);
       } catch (error) {
         console.error("Error inserting signature:", error);
-        // Fallback: try basic insertion without dimensions
         try {
           editorObj.editor.insertImage(signatureOptions.dataUrl);
           setSignatureCount((prev) => prev + 1);
           setHasSignature(true);
           setIsDirty(true);
           console.log("Signature inserted with basic method");
-          // Auto-save with "signed" action
           setTimeout(() => {
             saveChangesWithAction("signed");
           }, 100);
@@ -192,7 +186,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
   };
 
   const handleAddSignatureClick = () => {
-    // Don't allow signature if document is locked
     if (isDocumentLocked) {
       error("Cannot add signature to a locked document.");
       return;
@@ -209,18 +202,15 @@ const DocEditor: React.FC<DocEditorProps> = ({
       }
       return;
     }
-    // If no unsaved changes, allow signature modal to open
     setShowSignatureModal(true);
   };
 
   const handleContentChange = () => {
-    // Don't allow editing if document is locked
     if (isDocumentLocked && !forceEditable) {
       error("This document is locked and cannot be edited.");
       return;
     }
 
-    // If content changes and we have signatures or document is signed, show confirmation
     if (
       (hasSignature || isDocumentSigned) &&
       !showEditConfirmDialog &&
@@ -229,24 +219,21 @@ const DocEditor: React.FC<DocEditorProps> = ({
       setShowEditConfirmDialog(true);
       return;
     }
-    // Otherwise, just mark as dirty
     setIsDirty(true);
   };
 
   const handleEditConfirmation = (shouldContinue: boolean) => {
     if (shouldContinue) {
-      // Clear signature state and re-enable editing
       setHasSignature(false);
       setSignatureCount(0);
       setIsDirty(true);
-      setForceEditable(true); // Force editing even if document status is signed
+      setForceEditable(true);
       console.log("Signatures cleared, editing re-enabled");
     }
     setShowEditConfirmDialog(false);
   };
 
   const handleForceEdit = () => {
-    // Don't allow force edit if document is locked
     if (isDocumentLocked) {
       error(
         "Cannot edit a locked document. The document is permanently archived."
@@ -280,11 +267,10 @@ const DocEditor: React.FC<DocEditorProps> = ({
     if (sfdt && editorRef.current) {
       try {
         editorRef.current.documentEditor.open(sfdt);
-        // Reset states when loading new document
         setIsDirty(false);
         setHasSignature(false);
         setSignatureCount(0);
-        setForceEditable(false); // Reset forced editing when loading new document
+        setForceEditable(false);
       } catch (error) {
         console.error("Error loading document:", error);
       }
@@ -297,7 +283,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
     const container = editorRef.current as any;
     if (editorObj && container) {
       editorObj.isReadOnly = shouldBeReadOnly;
-      container.showToolbar = !shouldBeReadOnly; // hide/show toolbar safely
+      container.showToolbar = !shouldBeReadOnly;
     }
   }, [shouldBeReadOnly]);
 
@@ -314,7 +300,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
 
   const onSaveCopyFromLog = async (logEntry: any) => {
     try {
-      // Hacky way: hidden container element
       const hiddenContainer = document.createElement("div");
       hiddenContainer.style.position = "absolute";
       hiddenContainer.style.left = "-9999px";
@@ -329,11 +314,8 @@ const DocEditor: React.FC<DocEditorProps> = ({
       });
 
       DocumentEditorContainer.Inject(Toolbar);
-
-      // Appending to hidden container
       tempEditorContainer.appendTo(hiddenContainer);
 
-      // Parsing of SFDT content
       let sfdtContent;
       if (typeof logEntry.sfdt === "string") {
         try {
@@ -393,7 +375,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
           },
         }
       );
-      // Clear dirty flag after successful save
       setIsDirty(false);
       console.log(`Document saved successfully with action: ${action}`);
     } catch (err) {
@@ -419,7 +400,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
           disabled={shouldBeReadOnly}
         />
 
-        {/* Status + Actions */}
+        {/* Status Indicators */}
         <div className="flex items-center gap-2 flex-wrap">
           {isDirty && (
             <span className="flex items-center gap-1 text-sm text-amber-700 px-3 py-1.5 bg-amber-50 rounded-md border border-amber-200">
@@ -437,7 +418,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
               {isDocumentLocked ? "Locked" : "Read-only"}
             </span>
           )}
-          {/* Add locked document indicator */}
           {isDocumentLocked && (
             <span className="flex items-center gap-1 text-sm text-red-700 px-3 py-1.5 bg-red-50 rounded-md border border-red-200">
               <Archive size={16} /> Archived
@@ -477,86 +457,133 @@ const DocEditor: React.FC<DocEditorProps> = ({
             </span>
           )}
 
-          {/* Settings - only show if creator and document is not locked */}
-          {isCreator && (
+          {/* Primary Actions */}
+          <div className="flex items-center gap-2">
+            {/* Add Signature - Primary action */}
             <button
-              onClick={() => setShowSettingsModal(true)}
-              className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700 transition"
+              onClick={handleAddSignatureClick}
+              disabled={shouldBeReadOnly}
+              className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
+                shouldBeReadOnly
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700"
+              }`}
             >
-              <Settings size={16} /> Settings
+              <Plus size={16} /> Signature
             </button>
-          )}
 
-          {/* Force Edit - don't show if document is locked */}
-          {shouldBeReadOnly && !isDocumentLocked && (
+            {/* Save - Primary action */}
             <button
-              onClick={handleForceEdit}
-              className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-orange-600 text-white hover:bg-orange-700 transition"
+              onClick={saveChanges}
+              disabled={!isDirty || isDocumentLocked}
+              className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
+                isDirty && !isDocumentLocked
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
             >
-              <Pencil size={16} /> Force Edit
+              <Save size={16} /> Save
             </button>
-          )}
 
-          {/* Signature */}
-          <button
-            onClick={handleAddSignatureClick}
-            disabled={shouldBeReadOnly}
-            className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
-              shouldBeReadOnly
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-green-600 text-white hover:bg-green-700"
-            }`}
-          >
-            <Plus size={16} /> Signature
-          </button>
+            {/* Actions Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowActionsDropdown(!showActionsDropdown)}
+                className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700 transition"
+              >
+                <Settings size={16} />
+                More
+                <ChevronDown size={14} />
+              </button>
 
-          {/* Save - disabled if document is locked */}
-          <button
-            onClick={saveChanges}
-            disabled={!isDirty || isDocumentLocked}
-            className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
-              isDirty && !isDocumentLocked
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            <Save size={16} /> Save
-          </button>
+              {showActionsDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <div className="py-1">
+                    {/* Export */}
+                    <button
+                      onClick={() => {
+                        onSave();
+                        setShowActionsDropdown(false);
+                      }}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <Download size={16} /> Export Document
+                    </button>
 
-          {/* Export */}
-          <button
-            onClick={onSave}
-            className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
-          >
-            <Download size={16} /> Export
-          </button>
+                    {/* Activity Logs */}
+                    <button
+                      onClick={async () => {
+                        await handleActivityLogs();
+                        setShowLogs(true);
+                        setShowActionsDropdown(false);
+                      }}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <List size={16} /> Activity Logs
+                    </button>
 
-          {/* Activity Logs */}
-          <button
-            onClick={async () => {
-              await handleActivityLogs();
-              setShowLogs(true); // ✅ open modal after fetching
-            }}
-            className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition"
-          >
-            <List size={16} /> Logs
-          </button>
+                    {/* Document Comparison */}
+                    <button
+                      onClick={() => {
+                        setShowComparisonModal(true);
+                        setShowActionsDropdown(false);
+                      }}
+                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <FileSearch size={16} /> Compare Versions
+                    </button>
 
-          {/* Document Comparison */}
-          <button
-            onClick={() => setShowComparisonModal(true)}
-            className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition"
-          >
-            <FileSearch size={16} /> Compare
-          </button>
+                    {/* Force Edit - only show if applicable */}
+                    {shouldBeReadOnly && !isDocumentLocked && (
+                      <>
+                        <hr className="my-1" />
+                        <button
+                          onClick={() => {
+                            handleForceEdit();
+                            setShowActionsDropdown(false);
+                          }}
+                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-orange-700 hover:bg-orange-50"
+                        >
+                          <Pencil size={16} /> Force Edit
+                        </button>
+                      </>
+                    )}
+
+                    {/* Settings - only show if creator */}
+                    {isCreator && (
+                      <>
+                        <hr className="my-1" />
+                        <button
+                          onClick={() => {
+                            setShowSettingsModal(true);
+                            setShowActionsDropdown(false);
+                          }}
+                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <Settings size={16} /> Document Settings
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Close dropdown when clicking outside */}
+      {showActionsDropdown && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowActionsDropdown(false)}
+        />
+      )}
 
       {/* Logs Modal */}
       {showLogs && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <div className="bg-white p-6 rounded-2xl shadow-xl w-auto max-h-[80vh] flex flex-col">
-            {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-800">
                 📜 Activity Logs
@@ -569,9 +596,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
               </button>
             </div>
 
-            {/* Content */}
             <div className="flex gap-6 overflow-hidden">
-              {/* Left - Signatures */}
               <div className="w-64 border-r pr-4 flex-shrink-0 self-start">
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                   <FileCheck size={14} />
@@ -608,7 +633,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
                 )}
               </div>
 
-              {/* Right - Logs */}
               <div className="flex-1 max-h-[70vh] overflow-y-auto pr-2">
                 {logs.length > 0 ? (
                   <ul className="space-y-4">
@@ -667,7 +691,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
                               </span>
                             </p>
 
-                            {/* Download Button */}
                             <div className="mt-2 flex justify-start">
                               <button
                                 onClick={() => {
@@ -756,6 +779,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
           </div>
         </div>
       )}
+
       {/* Document Comparison Modal */}
       {showComparisonModal && documentId && (
         <DocumentComparisonModal
