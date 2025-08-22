@@ -151,6 +151,7 @@ export const updateDocument: RequestHandler = async (req, res) => {
       res.status(423).json({
         message: "Document is locked. Cannot modify.",
       });
+      return;
     }
 
     // Find latest version
@@ -199,8 +200,14 @@ export const updateDocument: RequestHandler = async (req, res) => {
 
     if (action === "signed") {
       document.status = "signed";
-      document.signedBy.push(new mongoose.Types.ObjectId(user.id));
+
+      if (!document.signedBy.some((id) => id.equals(user.id))) {
+        document.signedBy.push(new mongoose.Types.ObjectId(user.id));
+      }
     } else if (action === "edited") {
+      if (document.status === "signed") {
+        document.signedBy = [];
+      }
       document.status = "draft";
     }
 
