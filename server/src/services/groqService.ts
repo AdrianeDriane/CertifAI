@@ -1,9 +1,8 @@
-
 // Enhanced Groq service with better error handling and validation
 import { Groq } from "groq-sdk";
 import { buildLegalDocumentPrompt } from "./groqPromptBuilder";
 
-const groq = new Groq({
+export const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
@@ -16,51 +15,51 @@ function extractJSON(text: string): string {
     .replace(/^\s*```\s*/g, "")
     .replace(/\s*```\s*$/g, "")
     .trim();
-  
+
   // Try to find the main JSON object
   const jsonStart = cleaned.indexOf("{");
   const jsonEnd = cleaned.lastIndexOf("}");
-  
+
   if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
     throw new Error("No valid JSON object found in response");
   }
-  
+
   return cleaned.substring(jsonStart, jsonEnd + 1);
 }
 
 function sanitizeJSON(jsonString: string): string {
   return jsonString
-    .replace(/[""]/g, '"')           // Replace smart quotes
-    .replace(/['']/g, "'")           // Replace smart single quotes
-    .replace(/,\s*([}\]])/g, "$1")   // Remove trailing commas
-    .replace(/\r?\n/g, " ")          // Replace newlines with spaces
-    .replace(/\s+/g, " ")            // Normalize whitespace
-    .replace(/\\n/g, "\\n")          // Preserve escaped newlines
-    .replace(/\\t/g, "\\t")          // Preserve escaped tabs
+    .replace(/[""]/g, '"') // Replace smart quotes
+    .replace(/['']/g, "'") // Replace smart single quotes
+    .replace(/,\s*([}\]])/g, "$1") // Remove trailing commas
+    .replace(/\r?\n/g, " ") // Replace newlines with spaces
+    .replace(/\s+/g, " ") // Normalize whitespace
+    .replace(/\\n/g, "\\n") // Preserve escaped newlines
+    .replace(/\\t/g, "\\t") // Preserve escaped tabs
     .trim();
 }
 
 // Validate the generated document structure
 function validateDocumentStructure(parsed: any): void {
   const requiredFields = [
-    'metadata',
-    'header', 
-    'preamble',
-    'parties',
-    'signatures'
+    "metadata",
+    "header",
+    "preamble",
+    "parties",
+    "signatures",
   ];
-  
+
   for (const field of requiredFields) {
     if (!parsed[field]) {
       throw new Error(`Missing required field: ${field}`);
     }
   }
-  
+
   // Validate parties array
   if (!Array.isArray(parsed.parties) || parsed.parties.length === 0) {
     throw new Error("Document must have at least one party");
   }
-  
+
   // Validate signatures array
   if (!Array.isArray(parsed.signatures) || parsed.signatures.length === 0) {
     throw new Error("Document must have signature provisions");
@@ -86,16 +85,16 @@ export async function getGroqResponse(
           role: "system",
           content: `You are a specialized Philippine legal document AI. Generate ONLY valid JSON responses with no additional text, explanations, or markdown formatting. Focus on legal precision, SFDT compatibility, and Philippine legal standards.`,
         },
-        { 
-          role: "user", 
-          content: fullPrompt 
+        {
+          role: "user",
+          content: fullPrompt,
         },
       ],
-      temperature: 0.1,           // Low temperature for consistency
-      max_tokens: 8000,           // Increased for complex documents
-      top_p: 0.9,                 // Slightly higher for better variety
-      frequency_penalty: 0.1,     // Reduce repetition
-      presence_penalty: 0.1,      // Encourage diverse content
+      temperature: 0.1, // Low temperature for consistency
+      max_tokens: 8000, // Increased for complex documents
+      top_p: 0.9, // Slightly higher for better variety
+      frequency_penalty: 0.1, // Reduce repetition
+      presence_penalty: 0.1, // Encourage diverse content
     });
 
     const rawContent = response.choices[0]?.message?.content;
@@ -126,7 +125,10 @@ export async function getGroqResponse(
     try {
       validateDocumentStructure(parsed);
     } catch (validationError: any) {
-      console.warn("Document structure validation warning:", validationError.message);
+      console.warn(
+        "Document structure validation warning:",
+        validationError.message
+      );
       // Don't throw - just warn, as some documents may have different structures
     }
 
@@ -136,7 +138,9 @@ export async function getGroqResponse(
 
     // Enhanced error handling
     if (error.message?.includes("rate limit") || error.code === 429) {
-      throw new Error("API rate limit exceeded. Please try again in a few minutes.");
+      throw new Error(
+        "API rate limit exceeded. Please try again in a few minutes."
+      );
     }
 
     if (error.message?.includes("API key") || error.code === 401) {
@@ -144,11 +148,15 @@ export async function getGroqResponse(
     }
 
     if (error.message?.includes("timeout") || error.code === 408) {
-      throw new Error("Request timeout. The document may be too complex. Please try with simpler requirements.");
+      throw new Error(
+        "Request timeout. The document may be too complex. Please try with simpler requirements."
+      );
     }
 
     if (error.message?.includes("content filter") || error.code === 400) {
-      throw new Error("Content filtered. Please ensure your request complies with usage policies.");
+      throw new Error(
+        "Content filtered. Please ensure your request complies with usage policies."
+      );
     }
 
     throw error;
