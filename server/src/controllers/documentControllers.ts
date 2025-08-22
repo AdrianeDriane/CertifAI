@@ -315,15 +315,35 @@ export const modifyDocumentVisibility: RequestHandler = async (req, res) => {
   }
 };
 
-export const verifyDocumentVersion: RequestHandler = async (req, res) => {
+export const archiveDocument: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params as { id: string };
+    const user = req.user as { id: string };
+    const { document_id } = req.params;
 
-    // TODO: do this flow - compares the hashed sfdt content of the uploaded docx file to all hashed sfdt string being put in each blockchain transaction hash history
-    const doc = await DocumentModel.findById(id);
-    if (!doc) return res.status(404).json({ error: "Document not found" });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Verification failed" });
+    const document = await DocumentModel.findById(document_id);
+
+    if (!document) {
+      res.status(404).json({ message: "Document is not found." });
+      return;
+    }
+
+    if (!document.createdBy.equals(user.id)) {
+      res.status(401).json({
+        message: "User is unauthorized to lock/archive document.",
+      });
+      return;
+    }
+
+    document.status = "locked";
+    await document.save();
+
+    res.status(200).json({
+      message: "Document archived successfully",
+    });
+    return;
+  } catch (error) {
+    console.error("Error archiving document", error);
+    res.status(500).json({ message: "Error archiving document", error });
+    return;
   }
 };

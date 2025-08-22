@@ -6,6 +6,7 @@ import {
   updateDocument,
   modifyDocumentVisibility,
   addEditorByEmail,
+  archiveDocument,
 } from "../controllers/documentControllers";
 import { authenticate } from "../middlewares/authMiddleware";
 
@@ -18,6 +19,7 @@ router.put(
   authenticate,
   modifyDocumentVisibility
 );
+router.put("/archive-document/:document_id", authenticate, archiveDocument);
 router.get("/:document_id", authenticate, getDocumentById);
 router.put("/:document_id", authenticate, updateDocument);
 router.post(
