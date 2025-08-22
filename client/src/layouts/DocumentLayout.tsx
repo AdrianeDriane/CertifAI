@@ -19,10 +19,11 @@ export interface DocumentData {
   editors?: string[];
   createdBy?: string;
   versions: Version[];
+  signedBy: string[];
 }
 
 const DocumentLayout = () => {
-  document.getElementById('root')?.style.setProperty("max-width", "100%");
+  document.getElementById("root")?.style.setProperty("max-width", "100%");
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [sfdtContent, setSfdtContent] = useState<string>("");
   const { documentId } = useParams<{ documentId: string }>();
@@ -76,6 +77,7 @@ const DocumentLayout = () => {
           visibility={documentData?.visibility || "private"}
           editors={documentData?.editors || []}
           createdBy={documentData?.createdBy}
+          signedBy={documentData?.signedBy}
         />
       </div>
 
