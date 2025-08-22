@@ -2,11 +2,15 @@ import { type JSX, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DocumentTitleModal from "../../../components/modals/DocumentTitleModal";
 import { createDocument } from "../../../services/documentService";
+import { useAuth } from "../../../hooks/useAuth";
+import { useToast } from "../../../hooks/useToast";
 
 export default function Home(): JSX.Element {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const { logout } = useAuth();
+  const { success, error } = useToast();
 
   const handleUploadDocument = () => {
     setIsModalOpen(true);
@@ -36,6 +40,18 @@ export default function Home(): JSX.Element {
       );
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      logout();
+      navigate("/", { replace: true });
+      success("Logged out successfully.");
+    } catch (err) {
+      console.error("Logout error:", err);
+      error("Error logout.");
+      navigate("/", { replace: true });
     }
   };
 
@@ -75,6 +91,9 @@ export default function Home(): JSX.Element {
             </button>
           </div>
 
+          <div>
+            <button onClick={handleLogout}>Logout</button>
+          </div>
           <div className="pt-10 text-sm text-gray-400">
             Secured with Polygon • Stored on IPFS • AI-Powered Validations
           </div>

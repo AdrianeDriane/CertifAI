@@ -104,7 +104,7 @@ const ToastComponent: React.FC<ToastComponentProps> = ({ toast, onClose }) => {
       <div
         className={`
           relative overflow-hidden rounded-xl shadow-lg border-2 max-w-sm w-full
-          transform transition-all duration-300 ease-out
+          transform transition-all duration-300 ease-out z-50
           ${config.bgColor} ${config.borderColor}
           ${
             isVisible && !isExiting

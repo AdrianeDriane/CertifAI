@@ -5,7 +5,7 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   return (
-    <header className="bg-[#eeebf0] py-4 px-6 md:px-12 sticky top-0 z-50 shadow-sm">
+    <header className="bg-[#eeebf0] py-4 px-6 md:px-12 sticky top-0 z-40 shadow-sm">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <div className="flex items-center gap-2">
