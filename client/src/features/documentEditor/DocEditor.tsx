@@ -29,7 +29,10 @@ import {
   Hash,
   User,
   FileCode2,
+  FileSearch,
 } from "lucide-react";
+
+import DocumentComparisonModal from "./DocumentComparisonModal";
 
 DocumentEditorContainerComponent.Inject(Toolbar);
 
@@ -74,6 +77,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
   const { error } = useToast();
   const [showLogs, setShowLogs] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
 
   // Get current user ID on mount
   useEffect(() => {
@@ -477,7 +481,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
           </button>
 
           {/* Activity Logs */}
-          {/* Activity Logs */}
           <button
             onClick={async () => {
               await handleActivityLogs();
@@ -486,6 +489,14 @@ const DocEditor: React.FC<DocEditorProps> = ({
             className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition"
           >
             <List size={16} /> Logs
+          </button>
+
+          {/* Document Comparison */}
+          <button
+            onClick={() => setShowComparisonModal(true)}
+            className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition"
+          >
+            <FileSearch size={16} /> Compare
           </button>
         </div>
       </div>
@@ -645,6 +656,13 @@ const DocEditor: React.FC<DocEditorProps> = ({
             </div>
           </div>
         </div>
+      )}
+      {/* Document Comparison Modal */}
+      {showComparisonModal && documentId && (
+        <DocumentComparisonModal
+          documentId={documentId}
+          onClose={() => setShowComparisonModal(false)}
+        />
       )}
     </div>
   );
