@@ -201,8 +201,8 @@ export const updateDocument: RequestHandler = async (req, res) => {
     if (action === "signed") {
       document.status = "signed";
 
-      if (!document.signedBy.some((id) => id.equals(user.id))) {
-        document.signedBy.push(new mongoose.Types.ObjectId(user.id));
+      if (!document.signedBy.some((email) => email === user.email)) {
+        document.signedBy.push(user.email);
       }
     } else if (action === "edited") {
       if (document.status === "signed") {

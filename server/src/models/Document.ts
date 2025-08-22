@@ -26,7 +26,7 @@ export interface IDocument extends Document {
   visibility: "private" | "public";
   versions: IVersion[];
   editors: mongoose.Types.ObjectId[]; // array of User IDs
-  signedBy: mongoose.Types.ObjectId[];
+  signedBy: String[];
 }
 
 const DeviceInfoSchema = new Schema<IDeviceInfo>(
@@ -73,7 +73,7 @@ const DocumentSchema = new Schema<IDocument>(
       default: "private",
     },
     editors: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    signedBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    signedBy: [{ type: String, ref: "User" }],
     versions: { type: [VersionSchema], required: true },
   },
   { timestamps: true }
