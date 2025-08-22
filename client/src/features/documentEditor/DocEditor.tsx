@@ -32,6 +32,7 @@ import {
   FileSearch,
   FileCheck,
   CheckCircle,
+  Archive,
 } from "lucide-react";
 
 import DocumentComparisonModal from "./DocumentComparisonModal";
@@ -78,6 +79,10 @@ const DocEditor: React.FC<DocEditorProps> = ({
   >(visibility);
   const [currentEditors, setCurrentEditors] = useState<string[]>(editors);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  // Add state for document status
+  const [currentDocumentStatus, setCurrentDocumentStatus] = useState<string>(
+    documentStatus || "draft"
+  );
   const { error } = useToast();
   const [showLogs, setShowLogs] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
@@ -95,6 +100,11 @@ const DocEditor: React.FC<DocEditorProps> = ({
       }
     }
   }, []);
+
+  // Update document status when prop changes
+  useEffect(() => {
+    setCurrentDocumentStatus(documentStatus || "draft");
+  }, [documentStatus]);
 
   const handleActivityLogs = async () => {
     try {
@@ -123,8 +133,16 @@ const DocEditor: React.FC<DocEditorProps> = ({
   const isCreator = currentUserId && createdBy && currentUserId === createdBy;
 
   // Check if document should be read-only
-  const isDocumentSigned = documentStatus === "signed";
-  const shouldBeReadOnly = (hasSignature || isDocumentSigned) && !forceEditable;
+  const isDocumentSigned = currentDocumentStatus === "signed";
+  const isDocumentLocked = currentDocumentStatus === "locked";
+  const shouldBeReadOnly =
+    (hasSignature || isDocumentSigned || isDocumentLocked) && !forceEditable;
+
+  // Handle document locked callback
+  const handleDocumentLocked = () => {
+    setCurrentDocumentStatus("locked");
+    setForceEditable(false); // Disable force edit when document is locked
+  };
 
   const insertSignature = (signatureOptions: SignatureOptions) => {
     const editorObj = editorRef.current?.documentEditor;
@@ -174,6 +192,12 @@ const DocEditor: React.FC<DocEditorProps> = ({
   };
 
   const handleAddSignatureClick = () => {
+    // Don't allow signature if document is locked
+    if (isDocumentLocked) {
+      error("Cannot add signature to a locked document.");
+      return;
+    }
+
     if (isDirty) {
       const shouldSave = window.confirm(
         "You must save your changes before adding a signature. Save now?"
@@ -190,6 +214,12 @@ const DocEditor: React.FC<DocEditorProps> = ({
   };
 
   const handleContentChange = () => {
+    // Don't allow editing if document is locked
+    if (isDocumentLocked && !forceEditable) {
+      error("This document is locked and cannot be edited.");
+      return;
+    }
+
     // If content changes and we have signatures or document is signed, show confirmation
     if (
       (hasSignature || isDocumentSigned) &&
@@ -216,6 +246,14 @@ const DocEditor: React.FC<DocEditorProps> = ({
   };
 
   const handleForceEdit = () => {
+    // Don't allow force edit if document is locked
+    if (isDocumentLocked) {
+      error(
+        "Cannot edit a locked document. The document is permanently archived."
+      );
+      return;
+    }
+
     const shouldContinue = window.confirm(
       "This will make the signed document editable. Any signatures will be invalidated. Do you want to continue?"
     );
@@ -395,14 +433,23 @@ const DocEditor: React.FC<DocEditorProps> = ({
           )}
           {shouldBeReadOnly && (
             <span className="flex items-center gap-1 text-sm text-blue-700 px-3 py-1.5 bg-blue-50 rounded-md border border-blue-200">
-              <Lock size={16} /> Read-only
+              <Lock size={16} />
+              {isDocumentLocked ? "Locked" : "Read-only"}
             </span>
           )}
-          {forceEditable && (isDocumentSigned || hasSignature) && (
-            <span className="flex items-center gap-1 text-sm text-orange-700 px-3 py-1.5 bg-orange-50 rounded-md border border-orange-200">
-              <Unlock size={16} /> Forced
+          {/* Add locked document indicator */}
+          {isDocumentLocked && (
+            <span className="flex items-center gap-1 text-sm text-red-700 px-3 py-1.5 bg-red-50 rounded-md border border-red-200">
+              <Archive size={16} /> Archived
             </span>
           )}
+          {forceEditable &&
+            (isDocumentSigned || hasSignature) &&
+            !isDocumentLocked && (
+              <span className="flex items-center gap-1 text-sm text-orange-700 px-3 py-1.5 bg-orange-50 rounded-md border border-orange-200">
+                <Unlock size={16} /> Forced
+              </span>
+            )}
 
           {/* Visibility */}
           <span
@@ -430,7 +477,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
             </span>
           )}
 
-          {/* Settings */}
+          {/* Settings - only show if creator and document is not locked */}
           {isCreator && (
             <button
               onClick={() => setShowSettingsModal(true)}
@@ -440,8 +487,8 @@ const DocEditor: React.FC<DocEditorProps> = ({
             </button>
           )}
 
-          {/* Force Edit */}
-          {shouldBeReadOnly && (
+          {/* Force Edit - don't show if document is locked */}
+          {shouldBeReadOnly && !isDocumentLocked && (
             <button
               onClick={handleForceEdit}
               className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-orange-600 text-white hover:bg-orange-700 transition"
@@ -463,12 +510,12 @@ const DocEditor: React.FC<DocEditorProps> = ({
             <Plus size={16} /> Signature
           </button>
 
-          {/* Save */}
+          {/* Save - disabled if document is locked */}
           <button
             onClick={saveChanges}
-            disabled={!isDirty}
+            disabled={!isDirty || isDocumentLocked}
             className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
-              isDirty
+              isDirty && !isDocumentLocked
                 ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
@@ -674,6 +721,8 @@ const DocEditor: React.FC<DocEditorProps> = ({
         <DocumentSettings
           documentId={documentId}
           currentVisibility={currentVisibility}
+          currentStatus={currentDocumentStatus as "draft" | "signed" | "locked"}
+          onDocumentLocked={handleDocumentLocked}
           onClose={() => setShowSettingsModal(false)}
         />
       )}
