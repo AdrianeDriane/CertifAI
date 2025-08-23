@@ -1,42 +1,28 @@
+// DocEditor.tsx
 import "../../App.css";
-import { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
-  DocumentEditorContainerComponent,
   DocumentEditorContainer,
+  DocumentEditorContainerComponent,
   Toolbar,
 } from "@syncfusion/ej2-react-documenteditor";
-import { getFingerprint } from "../../utils/getFingerprint";
-import axios from "axios";
+import { useToast } from "../../hooks/useToast";
+
+// Custom hooks
+import { useDocumentAuth } from "./hooks/useDocumentAuth";
+import { useDocumentEditor } from "./hooks/useDocumentEditor";
+import { useDocumentActions } from "./hooks/useDocumentActions";
+
+// Components
+import { DocumentHeader } from "./components/DocumentHeader";
+import { ActivityLogsModal } from "./components/ActivityLogsModal";
 import SignatureModal from "../signature/SignatureModal";
 import DocumentSettings from "./DocumentSettings";
-import { useToast } from "../../hooks/useToast";
-import {
-  AlertTriangle,
-  FileSignature,
-  Lock,
-  Unlock,
-  Globe,
-  EyeOff,
-  Users,
-  Settings,
-  Pencil,
-  Plus,
-  Save,
-  Download,
-  List,
-  Clock,
-  Hash,
-  User,
-  FileCode2,
-  FileSearch,
-  FileCheck,
-  CheckCircle,
-  Archive,
-  ChevronDown,
-} from "lucide-react";
-
 import DocumentComparisonModal from "./DocumentComparisonModal";
+
+// Services
+import { DocumentService } from "./services/documentService";
 
 DocumentEditorContainerComponent.Inject(Toolbar);
 
@@ -65,124 +51,93 @@ const DocEditor: React.FC<DocEditorProps> = ({
   createdBy,
   signedBy,
 }) => {
-  const editorRef = useRef<DocumentEditorContainerComponent>(null);
   const { documentId } = useParams<{ documentId?: string }>();
-  const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const { error } = useToast();
+
+  // State
   const [localFileName, setLocalFileName] = useState(fileName);
-  const [signatureCount, setSignatureCount] = useState(0);
-  const [hasSignature, setHasSignature] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-  const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
-  const [forceEditable, setForceEditable] = useState(false);
   const [currentVisibility, setCurrentVisibility] = useState<
     "public" | "private"
   >(visibility);
   const [currentEditors, setCurrentEditors] = useState<string[]>(editors);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentDocumentStatus, setCurrentDocumentStatus] = useState<string>(
     documentStatus || "draft"
   );
-  const { error } = useToast();
-  const [showLogs, setShowLogs] = useState(false);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
-  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+  const [logs, setLogs] = useState<any[]>([]);
 
-  // Get current user ID on mount
+  // Custom hooks
+
+  const {
+    editorRef,
+    isDirty,
+    setIsDirty,
+    hasSignature,
+    setHasSignature,
+    signatureCount,
+    setSignatureCount,
+    forceEditable,
+    setForceEditable,
+  } = useDocumentEditor(sfdt, false);
+
+  const { isCreator, shouldBeReadOnly } = useDocumentAuth(
+    createdBy,
+    currentDocumentStatus,
+    hasSignature,
+    forceEditable
+  );
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        setCurrentUserId(payload.id || payload.userId);
-      } catch (err) {
-        console.error("Error parsing token:", err);
-      }
+    if (editorRef.current) {
+      editorRef.current.documentEditor.isReadOnly = shouldBeReadOnly;
     }
-  }, []);
+  }, [shouldBeReadOnly, editorRef]);
 
-  // Update document status when prop changes
+  const { saveChangesWithAction, exportDocument, saveChanges } =
+    useDocumentActions({
+      documentId,
+      editorRef,
+      setIsDirty,
+      onError: error,
+    });
+
+  // Derived state
+  const isDocumentLocked = currentDocumentStatus === "locked";
+
+  // Effects
+  useEffect(() => {
+    setLocalFileName(fileName);
+  }, [fileName]);
+
+  useEffect(() => {
+    setCurrentVisibility(visibility);
+    setCurrentEditors(editors);
+  }, [visibility, editors]);
+
   useEffect(() => {
     setCurrentDocumentStatus(documentStatus || "draft");
   }, [documentStatus]);
 
-  const handleActivityLogs = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const fingerprint = await getFingerprint();
-
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "x-device-fingerprint": fingerprint,
-          },
-        }
-      );
-
-      const versions = response.data.versions;
-      setLogs(versions);
-    } catch (error) {
-      console.error("Error fetching activity logs:", error);
+  // Event handlers
+  const handleContentChange = () => {
+    if (isDocumentLocked && !forceEditable) {
+      error("This document is locked and cannot be edited.");
+      return;
     }
-  };
 
-  const isCreator = currentUserId && createdBy && currentUserId === createdBy;
-
-  // Check if document should be read-only
-  const isDocumentSigned = currentDocumentStatus === "signed";
-  const isDocumentLocked = currentDocumentStatus === "locked";
-  const shouldBeReadOnly =
-    (hasSignature || isDocumentSigned || isDocumentLocked) && !forceEditable;
-
-  // Handle document locked callback
-  const handleDocumentLocked = () => {
-    setCurrentDocumentStatus("locked");
-    setForceEditable(false);
-  };
-
-  const insertSignature = (signatureOptions: SignatureOptions) => {
-    const editorObj = editorRef.current?.documentEditor;
-    if (editorObj) {
-      try {
-        editorObj.focusIn();
-        editorObj.editor.insertImage(
-          signatureOptions.dataUrl,
-          signatureOptions.width,
-          signatureOptions.height
-        );
-        setSignatureCount((prev) => prev + 1);
-        setHasSignature(true);
-        setIsDirty(true);
-        console.log(
-          `Signature ${signatureCount + 1} inserted successfully (${
-            signatureOptions.width
-          }x${signatureOptions.height})`
-        );
-        setTimeout(() => {
-          saveChangesWithAction("signed");
-        }, 100);
-      } catch (error) {
-        console.error("Error inserting signature:", error);
-        try {
-          editorObj.editor.insertImage(signatureOptions.dataUrl);
-          setSignatureCount((prev) => prev + 1);
-          setHasSignature(true);
-          setIsDirty(true);
-          console.log("Signature inserted with basic method");
-          setTimeout(() => {
-            saveChangesWithAction("signed");
-          }, 100);
-        } catch (fallbackError) {
-          console.error("Fallback insertion also failed:", fallbackError);
-          alert("Error inserting signature. Please try again.");
-        }
-      }
+    if (
+      (hasSignature || currentDocumentStatus === "signed") &&
+      !showEditConfirmDialog &&
+      !forceEditable
+    ) {
+      setShowEditConfirmDialog(true);
+      return;
     }
-    setShowSignatureModal(false);
+    setIsDirty(true);
   };
 
   const handleAddSignatureClick = () => {
@@ -205,21 +160,42 @@ const DocEditor: React.FC<DocEditorProps> = ({
     setShowSignatureModal(true);
   };
 
-  const handleContentChange = () => {
-    if (isDocumentLocked && !forceEditable) {
-      error("This document is locked and cannot be edited.");
-      return;
+  const insertSignature = (signatureOptions: SignatureOptions) => {
+    const editorObj = editorRef.current?.documentEditor;
+    if (editorObj) {
+      try {
+        editorObj.focusIn();
+        editorObj.editor.insertImage(
+          signatureOptions.dataUrl,
+          signatureOptions.width,
+          signatureOptions.height
+        );
+        setSignatureCount((prev) => prev + 1);
+        setHasSignature(true);
+        setIsDirty(true);
+        console.log(`Signature ${signatureCount + 1} inserted successfully`);
+        setTimeout(() => {
+          saveChangesWithAction("signed");
+        }, 100);
+      } catch {
+        console.error("Error inserting signature:", error);
+        // Fallback method
+        try {
+          editorObj.editor.insertImage(signatureOptions.dataUrl);
+          setSignatureCount((prev) => prev + 1);
+          setHasSignature(true);
+          setIsDirty(true);
+          console.log("Signature inserted with basic method");
+          setTimeout(() => {
+            saveChangesWithAction("signed");
+          }, 100);
+        } catch (fallbackError) {
+          console.error("Fallback insertion also failed:", fallbackError);
+          error("Error inserting signature. Please try again.");
+        }
+      }
     }
-
-    if (
-      (hasSignature || isDocumentSigned) &&
-      !showEditConfirmDialog &&
-      !forceEditable
-    ) {
-      setShowEditConfirmDialog(true);
-      return;
-    }
-    setIsDirty(true);
+    setShowSignatureModal(false);
   };
 
   const handleEditConfirmation = (shouldContinue: boolean) => {
@@ -253,52 +229,18 @@ const DocEditor: React.FC<DocEditorProps> = ({
     }
   };
 
-  useEffect(() => {
-    setLocalFileName(fileName);
-  }, [fileName]);
-
-  useEffect(() => {
-    setCurrentVisibility(visibility);
-    setCurrentEditors(editors);
-  }, [visibility, editors]);
-
-  // Load generated document
-  useEffect(() => {
-    if (sfdt && editorRef.current) {
-      try {
-        editorRef.current.documentEditor.open(sfdt);
-        setIsDirty(false);
-        setHasSignature(false);
-        setSignatureCount(0);
-        setForceEditable(false);
-      } catch (error) {
-        console.error("Error loading document:", error);
-      }
-    }
-  }, [sfdt]);
-
-  // Handle read-only state changes
-  useEffect(() => {
-    const editorObj = editorRef.current?.documentEditor;
-    const container = editorRef.current as any;
-    if (editorObj && container) {
-      editorObj.isReadOnly = shouldBeReadOnly;
-      container.showToolbar = !shouldBeReadOnly;
-    }
-  }, [shouldBeReadOnly]);
-
-  const onSave = () => {
-    const editorObj = editorRef.current?.documentEditor;
-    if (editorObj) {
-      try {
-        editorObj.save(localFileName.trim() || "Untitled", "Docx");
-      } catch (error) {
-        console.error("Error saving document:", error);
-      }
+  const handleActivityLogs = async () => {
+    try {
+      const response = await DocumentService.getDocument(documentId!);
+      const versions = response.data.versions;
+      setLogs(versions);
+      setShowLogsModal(true);
+    } catch (error) {
+      console.error("Error fetching activity logs:", error);
     }
   };
 
-  const onSaveCopyFromLog = async (logEntry: any) => {
+  const handleDownloadVersion = async (logEntry: any) => {
     try {
       const hiddenContainer = document.createElement("div");
       hiddenContainer.style.position = "absolute";
@@ -322,7 +264,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
           sfdtContent = JSON.parse(logEntry.sfdt);
         } catch (parseError) {
           console.error("Error parsing SFDT string:", parseError);
-          alert("Invalid document format. Cannot download this version.");
+          error("Invalid document format. Cannot download this version.");
           return;
         }
       } else {
@@ -342,381 +284,38 @@ const DocEditor: React.FC<DocEditorProps> = ({
         tempEditorContainer.destroy();
         document.body.removeChild(hiddenContainer);
       }, 1000);
-    } catch (error) {
-      console.error("Error downloading document version:", error);
-      alert("Failed to download document version. Please try again.");
-    }
-  };
-
-  const saveChanges = async () => {
-    return saveChangesWithAction("edited");
-  };
-
-  const saveChangesWithAction = async (action: "edited" | "signed") => {
-    const token = localStorage.getItem("token");
-    const fingerprint = await getFingerprint();
-    const editorObj = editorRef.current?.documentEditor;
-
-    if (!editorObj) {
-      console.error("Editor not available");
-      return;
-    }
-
-    try {
-      const sfdtContent = editorObj.serialize();
-      await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
-        { sfdt: sfdtContent, action },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "x-device-fingerprint": fingerprint,
-          },
-        }
-      );
-      setIsDirty(false);
-      console.log(`Document saved successfully with action: ${action}`);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 403) {
-        error("You are not authorized to edit the document.");
-      } else {
-        console.error("Unexpected error fetching document:", err);
-      }
-      console.error("Error saving document:", err);
+      console.error("Error downloading document version:", err);
+      error("Failed to download document version. Please try again.");
     }
+  };
+
+  const handleDocumentLocked = () => {
+    setCurrentDocumentStatus("locked");
+    setForceEditable(false);
   };
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="bg-gray-100 border-b px-4 py-3 flex flex-wrap justify-between items-center gap-3">
-        {/* File Name */}
-        <input
-          type="text"
-          value={localFileName}
-          onChange={(e) => setLocalFileName(e.target.value)}
-          placeholder="Enter file name"
-          className="text-lg font-medium px-3 py-2 border border-gray-300 rounded-md flex-1 max-w-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-          disabled={shouldBeReadOnly}
-        />
-
-        {/* Status Indicators */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {isDirty && (
-            <span className="flex items-center gap-1 text-sm text-amber-700 px-3 py-1.5 bg-amber-50 rounded-md border border-amber-200">
-              <AlertTriangle size={16} /> Unsaved
-            </span>
-          )}
-          {signatureCount > 0 && (
-            <span className="flex items-center gap-1 text-sm text-green-700 px-3 py-1.5 bg-green-50 rounded-md border border-green-200">
-              <FileSignature size={16} /> {signatureCount}
-            </span>
-          )}
-          {shouldBeReadOnly && (
-            <span className="flex items-center gap-1 text-sm text-blue-700 px-3 py-1.5 bg-blue-50 rounded-md border border-blue-200">
-              <Lock size={16} />
-              {isDocumentLocked ? "Locked" : "Read-only"}
-            </span>
-          )}
-          {isDocumentLocked && (
-            <span className="flex items-center gap-1 text-sm text-red-700 px-3 py-1.5 bg-red-50 rounded-md border border-red-200">
-              <Archive size={16} /> Archived
-            </span>
-          )}
-          {forceEditable &&
-            (isDocumentSigned || hasSignature) &&
-            !isDocumentLocked && (
-              <span className="flex items-center gap-1 text-sm text-orange-700 px-3 py-1.5 bg-orange-50 rounded-md border border-orange-200">
-                <Unlock size={16} /> Forced
-              </span>
-            )}
-
-          {/* Visibility */}
-          <span
-            className={`flex items-center gap-1 text-sm px-3 py-1.5 rounded-md border ${
-              currentVisibility === "public"
-                ? "text-green-700 bg-green-50 border-green-200"
-                : "text-gray-700 bg-gray-50 border-gray-200"
-            }`}
-          >
-            {currentVisibility === "public" ? (
-              <>
-                <Globe size={16} /> Public
-              </>
-            ) : (
-              <>
-                <EyeOff size={16} /> Private
-              </>
-            )}
-          </span>
-
-          {/* Editors */}
-          {currentEditors.length > 0 && (
-            <span className="flex items-center gap-1 text-sm text-purple-700 px-3 py-1.5 bg-purple-50 rounded-md border border-purple-200">
-              <Users size={16} /> {currentEditors.length}
-            </span>
-          )}
-
-          {/* Primary Actions */}
-          <div className="flex items-center gap-2">
-            {/* Add Signature - Primary action */}
-            <button
-              onClick={handleAddSignatureClick}
-              disabled={shouldBeReadOnly}
-              className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
-                shouldBeReadOnly
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-700"
-              }`}
-            >
-              <Plus size={16} /> Signature
-            </button>
-
-            {/* Save - Primary action */}
-            <button
-              onClick={saveChanges}
-              disabled={!isDirty || isDocumentLocked}
-              className={`flex items-center gap-1 text-sm px-3 py-2 rounded-md transition ${
-                isDirty && !isDocumentLocked
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              <Save size={16} /> Save
-            </button>
-
-            {/* Actions Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-                className="flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700 transition"
-              >
-                <Settings size={16} />
-                More
-                <ChevronDown size={14} />
-              </button>
-
-              {showActionsDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                  <div className="py-1">
-                    {/* Export */}
-                    <button
-                      onClick={() => {
-                        onSave();
-                        setShowActionsDropdown(false);
-                      }}
-                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Download size={16} /> Export Document
-                    </button>
-
-                    {/* Activity Logs */}
-                    <button
-                      onClick={async () => {
-                        await handleActivityLogs();
-                        setShowLogs(true);
-                        setShowActionsDropdown(false);
-                      }}
-                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <List size={16} /> Activity Logs
-                    </button>
-
-                    {/* Document Comparison */}
-                    <button
-                      onClick={() => {
-                        setShowComparisonModal(true);
-                        setShowActionsDropdown(false);
-                      }}
-                      className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <FileSearch size={16} /> Compare Versions
-                    </button>
-
-                    {/* Force Edit - only show if applicable */}
-                    {shouldBeReadOnly && !isDocumentLocked && (
-                      <>
-                        <hr className="my-1" />
-                        <button
-                          onClick={() => {
-                            handleForceEdit();
-                            setShowActionsDropdown(false);
-                          }}
-                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-orange-700 hover:bg-orange-50"
-                        >
-                          <Pencil size={16} /> Force Edit
-                        </button>
-                      </>
-                    )}
-
-                    {/* Settings - only show if creator */}
-                    {isCreator && (
-                      <>
-                        <hr className="my-1" />
-                        <button
-                          onClick={() => {
-                            setShowSettingsModal(true);
-                            setShowActionsDropdown(false);
-                          }}
-                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          <Settings size={16} /> Document Settings
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Close dropdown when clicking outside */}
-      {showActionsDropdown && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowActionsDropdown(false)}
-        />
-      )}
-
-      {/* Logs Modal */}
-      {showLogs && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-auto max-h-[80vh] flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">
-                📜 Activity Logs
-              </h2>
-              <button
-                onClick={() => setShowLogs(false)}
-                className="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 transition"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="flex gap-6 overflow-hidden">
-              <div className="w-64 border-r pr-4 flex-shrink-0 self-start">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                  <FileCheck size={14} />
-                  Signed By:
-                </h4>
-
-                {signedBy && signedBy.length > 0 ? (
-                  <div className="space-y-1">
-                    {signedBy.map((signer, signerIdx) => (
-                      <div
-                        key={signerIdx}
-                        className="flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-1 rounded"
-                      >
-                        <CheckCircle size={12} />
-                        <span className="truncate" title={signer}>
-                          {signer}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded border-l-2 border-orange-200">
-                    <div className="flex items-start gap-1">
-                      <AlertTriangle
-                        size={12}
-                        className="mt-0.5 flex-shrink-0"
-                      />
-                      <span>
-                        Any signature isn't valid because file was configured
-                        after signature. User can attempt to sign again.
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 max-h-[70vh] overflow-y-auto pr-2">
-                {logs.length > 0 ? (
-                  <ul className="space-y-4">
-                    {[...logs].reverse().map((log, idx) => {
-                      const { ...displayLog } = log;
-
-                      return (
-                        <li
-                          key={idx}
-                          className="border rounded-xl bg-gray-50 p-4 shadow-sm hover:shadow-md transition"
-                        >
-                          <div>
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-700 font-medium">
-                                {displayLog.action.toUpperCase()}
-                              </span>
-                              <span className="text-xs text-gray-500 flex items-center gap-1">
-                                <Clock size={14} />{" "}
-                                {new Date(
-                                  displayLog.createdAt
-                                ).toLocaleString()}
-                              </span>
-                            </div>
-
-                            <p className="flex items-center gap-2 text-sm text-gray-700">
-                              <User size={16} /> Modified By:{" "}
-                              <span className="font-medium">
-                                {displayLog.emailModifiedBy}
-                              </span>
-                            </p>
-                            <p className="flex items-center gap-2 text-sm text-gray-700">
-                              <FileCode2 size={16} /> Version:{" "}
-                              <span className="font-medium">
-                                {displayLog.version}
-                              </span>
-                            </p>
-
-                            {displayLog.blockchainTxHash && (
-                              <p className="flex items-center gap-2 text-sm text-gray-700">
-                                <Hash size={16} /> Blockchain Tx:{" "}
-                                <a
-                                  href={`https://amoy.polygonscan.com/tx/${displayLog.blockchainTxHash}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 underline hover:text-blue-800"
-                                >
-                                  {displayLog.blockchainTxHash.slice(0, 10)}...
-                                </a>
-                              </p>
-                            )}
-
-                            <p className="flex items-center gap-2 text-sm text-gray-700">
-                              <Hash size={16} /> Hash:{" "}
-                              <span className="font-mono text-xs text-gray-600">
-                                {displayLog.hash}
-                              </span>
-                            </p>
-
-                            <div className="mt-2 flex justify-start">
-                              <button
-                                onClick={() => {
-                                  onSaveCopyFromLog(log);
-                                }}
-                                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition"
-                              >
-                                <Download size={14} />
-                                Download Document
-                              </button>
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500 text-center py-6">
-                    No activity logs found.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <DocumentHeader
+        fileName={localFileName}
+        setFileName={setLocalFileName}
+        isDirty={isDirty}
+        signatureCount={signatureCount}
+        shouldBeReadOnly={shouldBeReadOnly}
+        isDocumentLocked={isDocumentLocked}
+        forceEditable={forceEditable}
+        currentVisibility={currentVisibility}
+        currentEditors={currentEditors}
+        onSave={saveChanges}
+        onAddSignature={handleAddSignatureClick}
+        onExport={() => exportDocument(localFileName)}
+        onShowLogs={handleActivityLogs}
+        onShowComparison={() => setShowComparisonModal(true)}
+        onForceEdit={handleForceEdit}
+        onShowSettings={() => setShowSettingsModal(true)}
+        isCreator={isCreator}
+      />
 
       {/* Editor */}
       <div className="flex-1 min-h-0">
@@ -731,7 +330,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
         />
       </div>
 
-      {/* Signature Modal */}
+      {/* Modals */}
       {showSignatureModal && (
         <SignatureModal
           onConfirm={insertSignature}
@@ -739,7 +338,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
         />
       )}
 
-      {/* Document Settings Modal */}
       {showSettingsModal && documentId && (
         <DocumentSettings
           documentId={documentId}
@@ -749,6 +347,22 @@ const DocEditor: React.FC<DocEditorProps> = ({
           onClose={() => setShowSettingsModal(false)}
         />
       )}
+
+      {showComparisonModal && documentId && (
+        <DocumentComparisonModal
+          documentId={documentId}
+          onClose={() => setShowComparisonModal(false)}
+        />
+      )}
+
+      <ActivityLogsModal
+        isOpen={showLogsModal}
+        onClose={() => setShowLogsModal(false)}
+        logs={logs}
+        signedBy={signedBy}
+        fileName={localFileName}
+        onDownloadVersion={handleDownloadVersion}
+      />
 
       {/* Edit Confirmation Dialog */}
       {showEditConfirmDialog && (
@@ -778,14 +392,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Document Comparison Modal */}
-      {showComparisonModal && documentId && (
-        <DocumentComparisonModal
-          documentId={documentId}
-          onClose={() => setShowComparisonModal(false)}
-        />
       )}
     </div>
   );
