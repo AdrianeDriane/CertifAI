@@ -34,53 +34,73 @@ export const DocumentStatusIndicators: React.FC<
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {isDirty && (
-        <span className="flex items-center gap-1.5 text-sm font-medium text-amber-700 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200 shadow-sm">
-          <AlertTriangle size={14} /> Unsaved
+        <span
+          title="Unsaved Changes"
+          className="p-2 bg-amber-50 rounded-lg border border-amber-200 shadow-sm text-amber-700"
+        >
+          <AlertTriangle size={16} />
         </span>
       )}
+
       {signatureCount > 0 && (
-        <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200 shadow-sm">
-          <FileSignature size={14} /> {signatureCount} Signature
-          {signatureCount !== 1 ? "s" : ""}
+        <span
+          title={`${signatureCount} Signature${signatureCount !== 1 ? "s" : ""}`}
+          className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 shadow-sm text-emerald-700"
+        >
+          <FileSignature size={16} />
         </span>
       )}
+
       {shouldBeReadOnly && (
-        <span className="flex items-center gap-1.5 text-sm font-medium text-blue-700 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200 shadow-sm">
-          <Lock size={14} />
-          {isDocumentLocked ? "Locked" : "Read-only"}
+        <span
+          title={isDocumentLocked ? "Locked" : "Read-only"}
+          className="p-2 bg-blue-50 rounded-lg border border-blue-200 shadow-sm text-blue-700"
+        >
+          <Lock size={16} />
         </span>
       )}
+
       {isDocumentLocked && (
-        <span className="flex items-center gap-1.5 text-sm font-medium text-red-700 px-3 py-2 bg-red-50 rounded-lg border border-red-200 shadow-sm">
-          <Archive size={14} /> Archived
+        <span
+          title="Archived"
+          className="p-2 bg-red-50 rounded-lg border border-red-200 shadow-sm text-red-700"
+        >
+          <Archive size={16} />
         </span>
       )}
+
       {forceEditable && !isDocumentLocked && (
-        <span className="flex items-center gap-1.5 text-sm font-medium text-orange-700 px-3 py-2 bg-orange-50 rounded-lg border border-orange-200 shadow-sm">
-          <Unlock size={14} /> Force Edit
+        <span
+          title="Force Edit Enabled"
+          className="p-2 bg-orange-50 rounded-lg border border-orange-200 shadow-sm text-orange-700"
+        >
+          <Unlock size={16} />
         </span>
       )}
+
       <span
-        className={`flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg border shadow-sm ${
+        title={currentVisibility === "public" ? "Public" : "Private"}
+        className={`p-2 rounded-lg border shadow-sm ${
           currentVisibility === "public"
             ? "text-emerald-700 bg-emerald-50 border-emerald-200"
             : "text-slate-700 bg-slate-50 border-slate-200"
         }`}
       >
         {currentVisibility === "public" ? (
-          <>
-            <Globe size={14} /> Public
-          </>
+          <Globe size={16} />
         ) : (
-          <>
-            <EyeOff size={14} /> Private
-          </>
+          <EyeOff size={16} />
         )}
       </span>
+
       {currentEditors.length > 0 && (
-        <span className="flex items-center gap-1.5 text-sm font-medium text-[#aa6bfe] px-3 py-2 bg-purple-50 rounded-lg border border-purple-200 shadow-sm">
-          <Users size={14} /> {currentEditors.length} Editor
-          {currentEditors.length !== 1 ? "s" : ""}
+        <span
+          title={`${currentEditors.length} Editor${
+            currentEditors.length !== 1 ? "s" : ""
+          }`}
+          className="p-2 bg-purple-50 rounded-lg border border-purple-200 shadow-sm text-[#aa6bfe]"
+        >
+          <Users size={16} />
         </span>
       )}
     </div>

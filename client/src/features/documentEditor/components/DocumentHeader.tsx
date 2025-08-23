@@ -44,7 +44,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
 }) => {
   const handleBackHome = () => {
     // Navigate back to home/dashboard
-    window.location.href = "/dashboard"; // or use your router navigation
+    window.location.href = "/home"; // or use your router navigation
   };
 
   return (
