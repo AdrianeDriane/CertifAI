@@ -1,7 +1,7 @@
-// components/DocumentHeader.tsx
 import React from "react";
 import { DocumentStatusIndicators } from "./DocumentStatusIndicators";
 import { DocumentActions } from "./DocumentActions";
+import certifai_logo_no_text from "../../../assets/certifai-logo-no-text.svg";
 
 interface DocumentHeaderProps {
   fileName: string;
@@ -42,42 +42,69 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
   onShowSettings,
   isCreator,
 }) => {
+  const handleBackHome = () => {
+    // Navigate back to home/dashboard
+    window.location.href = "/dashboard"; // or use your router navigation
+  };
+
   return (
-    <div className="bg-gray-100 border-b px-4 py-3 flex flex-wrap justify-between items-center gap-3">
-      {/* File Name Input */}
-      <input
-        type="text"
-        value={fileName}
-        onChange={(e) => setFileName(e.target.value)}
-        placeholder="Enter file name"
-        className="text-lg font-medium px-3 py-2 border border-gray-300 rounded-md flex-1 max-w-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-        disabled={shouldBeReadOnly}
-      />
+    <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+      <div className="flex items-center justify-between gap-4">
+        {/* Left Section - Back Button, Logo, and File Name */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {/* Back to Home Button */}
+          <button
+            onClick={handleBackHome}
+            className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors duration-200 group"
+            title="Back to Dashboard"
+          >
+            <div className="flex items-center gap-2">
+              <img
+                src={certifai_logo_no_text}
+                alt="Logo Icon"
+                className="h-12"
+              />
+            </div>
+          </button>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <DocumentStatusIndicators
-          isDirty={isDirty}
-          signatureCount={signatureCount}
-          shouldBeReadOnly={shouldBeReadOnly}
-          isDocumentLocked={isDocumentLocked}
-          forceEditable={forceEditable}
-          currentVisibility={currentVisibility}
-          currentEditors={currentEditors}
-        />
+          {/* File Name Input */}
+          <div className="flex max-w-md">
+            <input
+              type="text"
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              placeholder="Enter document name"
+              className="w-auto text-md text-gray-700 font-semibold px-2 py-1 border-2 border-transparent rounded-xl hover:border-gray-300 focus:border-[#aa6bfe] focus:ring-4 focus:ring-[#aa6bfe] focus:ring-opacity-20 transition-all duration-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:hover:border-transparent"
+              disabled={shouldBeReadOnly}
+            />
+          </div>
+        </div>
 
-        <DocumentActions
-          shouldBeReadOnly={shouldBeReadOnly}
-          isDirty={isDirty}
-          isDocumentLocked={isDocumentLocked}
-          isCreator={isCreator}
-          onSave={onSave}
-          onAddSignature={onAddSignature}
-          onExport={onExport}
-          onShowLogs={onShowLogs}
-          onShowComparison={onShowComparison}
-          onForceEdit={onForceEdit}
-          onShowSettings={onShowSettings}
-        />
+        {/* Right Section - Status Indicators and Actions */}
+        <div className="flex items-center gap-3">
+          <DocumentStatusIndicators
+            isDirty={isDirty}
+            signatureCount={signatureCount}
+            shouldBeReadOnly={shouldBeReadOnly}
+            isDocumentLocked={isDocumentLocked}
+            forceEditable={forceEditable}
+            currentVisibility={currentVisibility}
+            currentEditors={currentEditors}
+          />
+          <DocumentActions
+            shouldBeReadOnly={shouldBeReadOnly}
+            isDirty={isDirty}
+            isDocumentLocked={isDocumentLocked}
+            isCreator={isCreator}
+            onSave={onSave}
+            onAddSignature={onAddSignature}
+            onExport={onExport}
+            onShowLogs={onShowLogs}
+            onShowComparison={onShowComparison}
+            onForceEdit={onForceEdit}
+            onShowSettings={onShowSettings}
+          />
+        </div>
       </div>
     </div>
   );
