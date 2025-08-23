@@ -10,6 +10,7 @@ import Error403Page from "./features/errors/pages/Error403Page";
 import { useToast } from "./hooks/useToast";
 import { ToastContainer } from "./components/Toast";
 import MainLayout from "./layouts/MainLayout";
+import DocumentsPage from "./features/documentEditor/DocumentsPage";
 
 function App() {
   const { toasts, removeToast } = useToast();
@@ -23,25 +24,25 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/403" element={<Error403Page />} />
 
-        {/* Protected Routes (User Side) */}
-        <Route
-          path="/home"
-          element={
-            <PrivateRoute>
-              <Home />
-            </PrivateRoute>
-          }
-        />
-
         {/* Document Layout with nested routes */}
         <Route
-          path="/documents"
+          path="/"
           element={
             <PrivateRoute>
               <MainLayout />
             </PrivateRoute>
           }
-        />
+        >
+          <Route
+            path="/home"
+            element={
+              <PrivateRoute>
+                <DocumentsPage />
+              </PrivateRoute>
+            }
+          />
+
+        </Route>
 
         <Route
           path="/document-editor/:documentId"
