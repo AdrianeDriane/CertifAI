@@ -262,7 +262,7 @@ const DocumentComparisonModal: React.FC<DocumentComparisonModalProps> = ({
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
             <FileText size={24} />
-            Compare Documents
+            Verify Documents
           </h2>
           <button
             onClick={onClose}
@@ -276,7 +276,7 @@ const DocumentComparisonModal: React.FC<DocumentComparisonModalProps> = ({
           {/* File Upload Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-700">
-              Upload Document to Compare
+              Upload Document to Verify
             </h3>
 
             <div
