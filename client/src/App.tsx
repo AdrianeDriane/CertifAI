@@ -5,11 +5,11 @@ import Home from "./features/user/pages/Home";
 import LoginSuccess from "./features/auth/pages/LoginSuccess";
 import { PrivateRoute } from "./components/auth/PrivateRoute";
 import DocumentLayout from "./layouts/DocumentLayout";
-import DocumentsPage from "./features/documentEditor/DocumentsPage";
 import { LandingPage } from "./features/landing/pages/LandingPage";
 import Error403Page from "./features/errors/pages/Error403Page";
 import { useToast } from "./hooks/useToast";
 import { ToastContainer } from "./components/Toast";
+import MainLayout from "./layouts/MainLayout";
 
 function App() {
   const { toasts, removeToast } = useToast();
@@ -38,7 +38,7 @@ function App() {
           path="/documents"
           element={
             <PrivateRoute>
-              <DocumentsPage />
+              <MainLayout />
             </PrivateRoute>
           }
         />
