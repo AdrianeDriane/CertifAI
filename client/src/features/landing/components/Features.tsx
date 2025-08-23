@@ -2,11 +2,11 @@ import {
   FileUp,
   PenTool,
   Shield,
-  UserCheck,
+  Users,
   Cpu,
   ClipboardList,
-  FileCheck,
 } from "lucide-react";
+
 export const Features = () => {
   const features = [
     {
@@ -25,19 +25,19 @@ export const Features = () => {
       icon: <Shield className="h-8 w-8 text-[#aa6bfe]" />,
       title: "Blockchain Hash Recording",
       description:
-        "Each document and signature generates a SHA-256 hash, permanently stored on Polygon.",
+        "Each document and signature generates a hash, permanently stored on Polygon.",
     },
     {
-      icon: <UserCheck className="h-8 w-8 text-[#aa6bfe]" />,
-      title: "User Authentication",
+      icon: <Users className="h-8 w-8 text-[#aa6bfe]" />,
+      title: "Access Control & Permissions",
       description:
-        "Google OAuth or email/password login, with role-based access controls.",
+        "Secure user management with customizable role-based access and permission controls.",
     },
     {
       icon: <Cpu className="h-8 w-8 text-[#aa6bfe]" />,
       title: "AI-Assisted Drafting",
       description:
-        "Smart text suggestions, clauses, and templates for legally-sound documents.",
+        "AI-generated drafts, clauses, and templates for legally-sound documents.",
     },
     {
       icon: <ClipboardList className="h-8 w-8 text-[#aa6bfe]" />,
@@ -46,6 +46,7 @@ export const Features = () => {
         "Transparent timeline showing all document actions with blockchain proofs.",
     },
   ];
+
   return (
     <section className="py-20 px-6 md:px-12 bg-white" id="features">
       <div className="container mx-auto">
@@ -64,7 +65,7 @@ export const Features = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-[#eeebf0] p-8 rounded-2xl hover:shadow-lg transition-all duration-300 hover:translate-y-[-5px] border border-transparent hover:border-[#aa6bfe] hover:border-opacity-20"
+              className="bg-[#eeebf0] text-left p-8 rounded-2xl hover:shadow-lg transition-all duration-300 hover:translate-y-[-5px] border border-transparent hover:border-[#aa6bfe] hover:border-opacity-20"
             >
               <div className="bg-white rounded-xl p-4 w-16 h-16 flex items-center justify-center mb-6 shadow-sm">
                 {feature.icon}
@@ -75,12 +76,6 @@ export const Features = () => {
               <p className="text-gray-600">{feature.description}</p>
             </div>
           ))}
-        </div>
-        <div className="mt-16 text-center">
-          <button className="bg-[#d0f600] text-[#000002] px-8 py-3 rounded-full font-medium hover:bg-opacity-80 transition-all inline-flex items-center">
-            <FileCheck className="mr-2 h-5 w-5" />
-            Verify a Document
-          </button>
         </div>
       </div>
     </section>
