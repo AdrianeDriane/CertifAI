@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, X, Search } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import certifai_logo from "../../../assets/certifai-logo.svg";
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -9,22 +10,13 @@ export const Header = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-[#000002] rounded-md flex items-center justify-center">
-              <div className="h-4 w-4 bg-[#d0f600] rounded-sm"></div>
-            </div>
-            <span className="text-[#000002] font-bold text-xl">CertifAI</span>
+            <img src={certifai_logo} alt="Logo Icon" className="h-11" />
           </div>
         </div>
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <a
-            href="#"
-            className="text-[#000002] font-medium hover:text-[#aa6bfe] transition-colors"
-          >
-            Home
-          </a>
-          <a
-            href="#"
+            href="#features"
             className="text-[#000002] font-medium hover:text-[#aa6bfe] transition-colors"
           >
             Features
@@ -43,9 +35,6 @@ export const Header = () => {
           </a>
         </nav>
         <div className="hidden md:flex items-center space-x-4">
-          <button className="p-2 rounded-full hover:bg-gray-100">
-            <Search size={20} className="text-[#000002]" />
-          </button>
           <button
             onClick={() => {
               navigate("/login");
@@ -68,13 +57,7 @@ export const Header = () => {
         <div className="md:hidden absolute top-16 left-0 right-0 bg-[#eeebf0] shadow-md p-4">
           <nav className="flex flex-col space-y-4">
             <a
-              href="#"
-              className="text-[#000002] font-medium p-2 hover:bg-gray-100 rounded"
-            >
-              Home
-            </a>
-            <a
-              href="#"
+              href="#features"
               className="text-[#000002] font-medium p-2 hover:bg-gray-100 rounded"
             >
               Features
