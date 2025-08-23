@@ -70,8 +70,6 @@ const DocEditor: React.FC<DocEditorProps> = ({
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
 
-  // Custom hooks
-
   const {
     editorRef,
     isDirty,
@@ -97,7 +95,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
     }
   }, [shouldBeReadOnly, editorRef]);
 
-  const { saveChangesWithAction, exportDocument, saveChanges } =
+  const { saveChangesWithAction, exportDocument, saveChanges, isSaving } =
     useDocumentActions({
       documentId,
       editorRef,
@@ -140,7 +138,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
     setIsDirty(true);
   };
 
-  const handleAddSignatureClick = () => {
+  const handleAddSignatureClick = async () => {
     if (isDocumentLocked) {
       error("Cannot add signature to a locked document.");
       return;
@@ -151,16 +149,19 @@ const DocEditor: React.FC<DocEditorProps> = ({
         "You must save your changes before adding a signature. Save now?"
       );
       if (shouldSave) {
-        saveChangesWithAction("edited").then(() => {
+        try {
+          await saveChangesWithAction("edited");
           setShowSignatureModal(true);
-        });
+        } catch (err) {
+          console.error("Error saving before signature:", err);
+        }
       }
       return;
     }
     setShowSignatureModal(true);
   };
 
-  const insertSignature = (signatureOptions: SignatureOptions) => {
+  const insertSignature = async (signatureOptions: SignatureOptions) => {
     const editorObj = editorRef.current?.documentEditor;
     if (editorObj) {
       try {
@@ -174,11 +175,17 @@ const DocEditor: React.FC<DocEditorProps> = ({
         setHasSignature(true);
         setIsDirty(true);
         console.log(`Signature ${signatureCount + 1} inserted successfully`);
-        setTimeout(() => {
-          saveChangesWithAction("signed");
+
+        // Save with async/await for better error handling
+        setTimeout(async () => {
+          try {
+            await saveChangesWithAction("signed");
+          } catch (err) {
+            console.error("Error saving after signature insertion:", err);
+          }
         }, 100);
-      } catch {
-        console.error("Error inserting signature:", error);
+      } catch (insertError) {
+        console.error("Error inserting signature:", insertError);
         // Fallback method
         try {
           editorObj.editor.insertImage(signatureOptions.dataUrl);
@@ -186,8 +193,13 @@ const DocEditor: React.FC<DocEditorProps> = ({
           setHasSignature(true);
           setIsDirty(true);
           console.log("Signature inserted with basic method");
-          setTimeout(() => {
-            saveChangesWithAction("signed");
+
+          setTimeout(async () => {
+            try {
+              await saveChangesWithAction("signed");
+            } catch (err) {
+              console.error("Error saving after fallback signature:", err);
+            }
           }, 100);
         } catch (fallbackError) {
           console.error("Fallback insertion also failed:", fallbackError);
@@ -307,6 +319,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
         forceEditable={forceEditable}
         currentVisibility={currentVisibility}
         currentEditors={currentEditors}
+        isSaving={isSaving}
         onSave={saveChanges}
         onAddSignature={handleAddSignatureClick}
         onExport={() => exportDocument(localFileName)}

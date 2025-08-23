@@ -15,6 +15,7 @@ interface DocumentActionsProps {
   isDirty: boolean;
   isDocumentLocked: boolean;
   isCreator: boolean;
+  isSaving?: boolean; // Add this prop
   onSave: () => void;
   onAddSignature: () => void;
   onExport: () => void;
@@ -29,6 +30,7 @@ export const DocumentActions: React.FC<DocumentActionsProps> = ({
   isDirty,
   isDocumentLocked,
   isCreator,
+  isSaving = false, // Default to false
   onSave,
   onAddSignature,
   onExport,
@@ -44,9 +46,9 @@ export const DocumentActions: React.FC<DocumentActionsProps> = ({
       {/* Add Signature Button */}
       <button
         onClick={onAddSignature}
-        disabled={shouldBeReadOnly}
+        disabled={shouldBeReadOnly || isSaving}
         className={`flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm ${
-          shouldBeReadOnly
+          shouldBeReadOnly || isSaving
             ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
             : "bg-[#d0f600] text-[#000002] hover:bg-[#c5e600] border border-[#d0f600] hover:shadow-md"
         }`}
@@ -54,24 +56,40 @@ export const DocumentActions: React.FC<DocumentActionsProps> = ({
         <Plus size={16} /> Add Signature
       </button>
 
-      {/* Save Button */}
+      {/* Save Button with Loading Animation */}
       <button
         onClick={onSave}
-        disabled={!isDirty || isDocumentLocked}
+        disabled={!isDirty || isDocumentLocked || isSaving}
         className={`flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm ${
-          isDirty && !isDocumentLocked
+          isDirty && !isDocumentLocked && !isSaving
             ? "bg-[#aa6bfe] text-white hover:bg-[#9a5bfe] border border-[#aa6bfe] hover:shadow-md"
             : "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
         }`}
       >
-        <Save size={16} /> Save
+        {isSaving ? (
+          <>
+            {/* Loading Spinner */}
+            <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+            <span>Saving...</span>
+          </>
+        ) : (
+          <>
+            <Save size={16} />
+            <span>Save</span>
+          </>
+        )}
       </button>
 
       {/* Actions Dropdown */}
       <div className="relative">
         <button
           onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-          className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl bg-slate-700 text-white hover:bg-slate-800 transition-all duration-200 shadow-sm border border-slate-700 hover:shadow-md"
+          disabled={isSaving}
+          className={`flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm border ${
+            isSaving
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+              : "bg-slate-700 text-white hover:bg-slate-800 border-slate-700 hover:shadow-md"
+          }`}
         >
           <Settings size={16} />
           More
@@ -83,7 +101,7 @@ export const DocumentActions: React.FC<DocumentActionsProps> = ({
           />
         </button>
 
-        {showActionsDropdown && (
+        {showActionsDropdown && !isSaving && (
           <>
             {/* Backdrop */}
             <div

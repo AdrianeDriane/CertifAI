@@ -13,6 +13,7 @@ interface DocumentHeaderProps {
   forceEditable: boolean;
   currentVisibility: "public" | "private";
   currentEditors: string[];
+  isSaving: boolean;
   onSave: () => void;
   onAddSignature: () => void;
   onExport: () => void;
@@ -33,6 +34,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
   forceEditable,
   currentVisibility,
   currentEditors,
+  isSaving,
   onSave,
   onAddSignature,
   onExport,
@@ -97,6 +99,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
             isDocumentLocked={isDocumentLocked}
             isCreator={isCreator}
             onSave={onSave}
+            isSaving={isSaving}
             onAddSignature={onAddSignature}
             onExport={onExport}
             onShowLogs={onShowLogs}
