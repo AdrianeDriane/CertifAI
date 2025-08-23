@@ -1,8 +1,8 @@
-// hooks/useDocumentActions.ts
 import { useCallback } from "react";
 import axios from "axios";
 import { getFingerprint } from "../../../utils/getFingerprint";
 import { DocumentEditorContainerComponent } from "@syncfusion/ej2-react-documenteditor";
+import { useToast } from "../../../hooks/useToast";
 
 interface UseDocumentActionsProps {
   documentId?: string;
@@ -17,6 +17,7 @@ export const useDocumentActions = ({
   setIsDirty,
   onError,
 }: UseDocumentActionsProps) => {
+  const { success, error } = useToast();
   const saveChangesWithAction = useCallback(
     async (action: "edited" | "signed") => {
       const token = localStorage.getItem("token");
@@ -43,12 +44,14 @@ export const useDocumentActions = ({
         );
         setIsDirty(false);
         console.log(`Document saved successfully with action: ${action}`);
+        success("Document saved successfully!");
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 403) {
           onError("You are not authorized to edit the document.");
         } else {
           console.error("Error saving document:", err);
         }
+        error("Saving document has failed.");
       }
     },
     [documentId, editorRef, setIsDirty, onError]
