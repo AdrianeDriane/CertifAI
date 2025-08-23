@@ -22,16 +22,16 @@ export const Header = () => {
             Features
           </a>
           <a
-            href="#"
-            className="text-[#000002] font-medium hover:text-[#aa6bfe] transition-colors"
-          >
-            How It Works
-          </a>
-          <a
-            href="#"
+            href="#about"
             className="text-[#000002] font-medium hover:text-[#aa6bfe] transition-colors"
           >
             About
+          </a>
+          <a
+            href="#how_it_works"
+            className="text-[#000002] font-medium hover:text-[#aa6bfe] transition-colors"
+          >
+            How It Works
           </a>
         </nav>
         <div className="hidden md:flex items-center space-x-4">
@@ -63,17 +63,18 @@ export const Header = () => {
               Features
             </a>
             <a
-              href="#"
-              className="text-[#000002] font-medium p-2 hover:bg-gray-100 rounded"
-            >
-              How It Works
-            </a>
-            <a
-              href="#"
+              href="#about"
               className="text-[#000002] font-medium p-2 hover:bg-gray-100 rounded"
             >
               About
             </a>
+            <a
+              href="#how_it_works"
+              className="text-[#000002] font-medium p-2 hover:bg-gray-100 rounded"
+            >
+              How It Works
+            </a>
+
             <button
               onClick={() => {
                 navigate("/login");

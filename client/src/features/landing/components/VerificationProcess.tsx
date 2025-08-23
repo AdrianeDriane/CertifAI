@@ -1,16 +1,26 @@
-import { FileUp, CheckCircle, Shield } from "lucide-react";
-export const VerificationProcess = () => {
+import { FileUp, CheckCircle, Shield, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+const VerificationProcess = () => {
+  const navigate = useNavigate();
+
   const steps = [
     {
       icon: <FileUp className="h-8 w-8 text-white" />,
-      title: "Upload Document",
+      title: "Visit Document",
+      description: "Upload or access any document on the CertifAI platform.",
+    },
+    {
+      icon: <Eye className="h-8 w-8 text-white" />,
+      title: "View Blockchain Trail",
       description:
-        "Upload any document to the CertifAI platform for verification.",
+        "Review complete audit logs and blockchain verification history.",
     },
     {
       icon: <Shield className="h-8 w-8 text-white" />,
-      title: "Blockchain Verification",
-      description: "Our system checks the document against blockchain records.",
+      title: "AI Verification",
+      description:
+        "Advanced AI algorithms analyze document authenticity and integrity.",
     },
     {
       icon: <CheckCircle className="h-8 w-8 text-white" />,
@@ -18,8 +28,9 @@ export const VerificationProcess = () => {
       description: "Receive immediate confirmation of document authenticity.",
     },
   ];
+
   return (
-    <section className="py-20 px-6 md:px-12 bg-white">
+    <section className="py-20 px-6 md:px-12 bg-white" id="how_it_works">
       <div className="container mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-[#000002] mb-4">
@@ -27,10 +38,10 @@ export const VerificationProcess = () => {
             Process
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Verify the authenticity of any document in just three simple steps.
+            Verify the authenticity of any document in just four simple steps.
           </p>
         </div>
-        <div className="flex flex-col md:flex-row gap-8 justify-center">
+        <div className="flex flex-col lg:flex-row gap-8 justify-center">
           {steps.map((step, index) => (
             <div key={index} className="flex-1 max-w-xs mx-auto">
               <div className="flex flex-col items-center">
@@ -45,9 +56,6 @@ export const VerificationProcess = () => {
                 </h3>
                 <p className="text-gray-600 text-center">{step.description}</p>
               </div>
-              {index < steps.length - 1 && (
-                <div className="hidden md:block h-0.5 w-12 bg-gray-300 absolute top-1/2 transform translate-x-full"></div>
-              )}
             </div>
           ))}
         </div>
@@ -61,11 +69,16 @@ export const VerificationProcess = () => {
                 Try Document Verification Now
               </h3>
               <p className="text-gray-600">
-                Drop your document here or click to upload
+                Create an account now and visit your document
               </p>
             </div>
-            <button className="bg-[#aa6bfe] text-white px-6 py-3 rounded-full font-medium hover:bg-opacity-90 transition-all whitespace-nowrap">
-              Upload File
+            <button
+              onClick={() => {
+                navigate("/register");
+              }}
+              className="bg-[#aa6bfe] text-white px-6 py-3 rounded-full font-medium hover:bg-opacity-90 transition-all whitespace-nowrap"
+            >
+              Sign Up
             </button>
           </div>
         </div>
@@ -73,3 +86,5 @@ export const VerificationProcess = () => {
     </section>
   );
 };
+
+export default VerificationProcess;
