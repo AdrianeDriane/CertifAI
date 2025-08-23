@@ -442,33 +442,33 @@ OR if changes are found:
 
 SUBSTANTIVE CHANGES TO DETECT:
 
-FINANCIAL & MONETARY:
+FINANCIAL & MONETARY (SUPER IMPORTANT):
 - Any change in amounts (rent, deposits, fees, penalties)
 - Payment terms, due dates, or schedules
 - Interest rates, late fees, or financial penalties
 
-PERSONAL & ENTITY INFORMATION:
+PERSONAL & ENTITY INFORMATION (SUPER IMPORTANT):
 - Names of parties (lessor, lessee, witnesses)
 - Addresses or contact information
 - Legal status or capacity descriptions
 
-TEMPORAL & DURATION:
+TEMPORAL & DURATION (SUPER IMPORTANT):
 - Start dates, end dates, or deadlines
 - Lease terms or contract duration
 - Notice periods or grace periods
 
-PROPERTY & ASSETS:
+PROPERTY & ASSETS (SUPER IMPORTANT):
 - Property descriptions or addresses
 - Square footage or measurements
 - Property conditions or specifications
 
-LEGAL TERMS & CONDITIONS:
+LEGAL TERMS & CONDITIONS (SUPER IMPORTANT):
 - Rights and obligations of parties
 - Termination clauses or conditions
 - Default provisions and remedies
 - Jurisdiction or governing law changes
 
-OPERATIONAL TERMS:
+OPERATIONAL TERMS (SUPER IMPORTANT):
 - Use restrictions or permitted activities
 - Maintenance responsibilities
 - Utility arrangements
@@ -479,7 +479,7 @@ ADDITIONS OR REMOVALS:
 - Existing clauses or sections removed
 - New requirements or restrictions
 
-For the summary field: List each change with a number (eg. 1., 2., 3., etc,.) showing exactly what changed from what to what and in which section, with a backslash n symbol at the end of each item. Ensure that you are enclosing the text with double quotation marks so that it counts as a string.
+For the summary field: List each change with a number followed with .) (eg. 1.), 2.), 3.), etc,.) showing exactly what changed from what to what and in which section. Ensure that you are enclosing the text with double quotation marks so that it counts as a string.
 
 For criticalChanges: Include only changes that significantly impact financial obligations, legal rights, or core contract terms.
 
@@ -490,6 +490,8 @@ IGNORE these minor differences:
 - Capitalization that doesn't affect legal meaning
 - Minor grammatical corrections
 - Spelling corrections that don't change meaning
+
+You need to make sure that you are 100% accurate in recognizing even the tiniest amount of difference, especially in numbers (money, dates, anything). You have to understand that we are handling legal documents here. 
 
 Return ONLY the JSON object, nothing else.
 `;
