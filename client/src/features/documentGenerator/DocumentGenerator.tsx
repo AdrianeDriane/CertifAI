@@ -1,4 +1,4 @@
-import { Wand, ChevronLeft, ChevronRight } from "lucide-react";
+import { Wand, ChevronLeft, ChevronRight, File } from "lucide-react";
 import React, { useState } from "react";
 import StepOne from "./StepOne";
 import StepTwo from "./StepTwo";
@@ -46,10 +46,6 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ onDocumentGenerat
         >
           <Wand size={20} />
         </div>
-        {isOpen && (
-          <h2 className="font-semibold text-gray-800 tracking-wide">Generator</h2>
-        )}
-
         {/* Toggle Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -65,13 +61,15 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ onDocumentGenerat
       <div className="flex-1 p-4">
         {isOpen ? (
           <div className="overflow-hidden h-full bg-white shadow-md rounded-xl p-6 space-y-6 animate-fadeIn">
-            <header className="border-b pb-4">
-              <h1 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                📄 Document Composer
-              </h1>
-              <p className="text-gray-500 text-sm mt-1">
-                Generate AI-powered legal documents in just a few steps.
-              </p>
+            <header className="border-b pb-4 text-start">
+               <h1 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <File />
+                  Certifai Composer
+                </h1>
+                <p className="text-gray-500 text-sm mt-1">
+                  Draft legally sound, AI-assisted documents with built-in security and 
+                  blockchain-backed authenticity.
+                </p>
             </header>
 
             {step === 1 && (
