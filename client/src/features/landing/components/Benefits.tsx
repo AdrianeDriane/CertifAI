@@ -1,7 +1,10 @@
 import { CheckCircle } from "lucide-react";
 export const Benefits = () => {
   return (
-    <section className="py-20 px-6 md:px-12 bg-[#eeebf0] relative overflow-hidden">
+    <section
+      id="about"
+      className="py-20 px-6 md:px-12 bg-[#eeebf0] relative overflow-hidden"
+    >
       <div className="container mx-auto">
         <div className="flex flex-col lg:flex-row items-center gap-12">
           <div className="lg:w-1/2 relative">

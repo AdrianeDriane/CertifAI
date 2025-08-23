@@ -1,14 +1,17 @@
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 export const Hero = () => {
+  const navigate = useNavigate();
+
   return (
-    <section className="relative py-20 px-6 md:px-12 overflow-hidden">
+    <section className="relative pb-20 pt-12 px-6 md:px-12 overflow-hidden">
       <div className="container mx-auto">
         <div className="flex flex-col lg:flex-row items-center">
           <div className="lg:w-1/2 z-10 text-left">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#000002] leading-tight mb-6">
-              AI-Powered Document{" "}
-              <span className="text-[#aa6bfe]">Security</span> &{" "}
-              <span className="text-[#d0f600]">Authentication</span>
+              AI-Powered{" "}
+              <span className="text-[#aa6bfe]">Blockchain Secured</span>{" "}
+              <span className="text-[#d0f600]">Doc Management</span> Platform
             </h1>
             <p className="text-lg md:text-xl text-gray-700 mb-8 max-w-2xl">
               CertifAI ensures authenticity, trust, and efficiency in digital
@@ -16,13 +19,20 @@ export const Hero = () => {
               intelligence.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-[#000002] text-white px-8 py-3 rounded-full font-medium hover:bg-opacity-90 transition-all flex items-center justify-center">
+              <button
+                className="bg-[#000002] text-white px-8 py-3 rounded-full font-medium hover:bg-opacity-90 transition-all flex items-center justify-center"
+                onClick={() => {
+                  navigate("/register");
+                }}
+              >
                 Get Started
                 <ArrowRight size={18} className="ml-2" />
               </button>
-              <button className="border-2 border-[#000002] text-[#000002] px-8 py-3 rounded-full font-medium hover:bg-gray-100 transition-all">
-                Learn More
-              </button>
+              <a href="#about">
+                <button className="border-2 border-[#000002] text-[#000002] px-8 py-3 rounded-full font-medium hover:bg-gray-100 transition-all">
+                  Learn More
+                </button>
+              </a>
             </div>
           </div>
           <div className="lg:w-1/2 mt-12 lg:mt-0 relative">

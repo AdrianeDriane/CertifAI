@@ -10,7 +10,7 @@ export const Header = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <div className="flex items-center gap-2">
-            <img src={certifai_logo} alt="Logo Icon" className="h-11" />
+            <img src={certifai_logo} alt="Logo Icon" className="h-10" />
           </div>
         </div>
         {/* Desktop Navigation */}
