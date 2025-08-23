@@ -346,7 +346,7 @@ const DocumentComparisonModal: React.FC<DocumentComparisonModalProps> = ({
               </h3>
 
               {/* Status Badge */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 {comparisonResult.hasChanges === 0 ? (
                   <>
                     <CheckCircle size={24} className="text-green-500" />
@@ -366,8 +366,18 @@ const DocumentComparisonModal: React.FC<DocumentComparisonModalProps> = ({
 
               {/* Summary */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-700 mb-2">Summary:</h4>
-                <p className="text-gray-600">{comparisonResult.summary}</p>
+                <h4 className="font-medium text-left text-gray-700 mb-2">
+                  Summary:
+                </h4>
+                <div className="text-justify text-gray-600">
+                  {comparisonResult.summary
+                    .split(/(?=\d+\.\))/) // Split before each number pattern like "1.)"
+                    .map((item, index) => (
+                      <p key={index} className="mb-2">
+                        {item.trim()}
+                      </p>
+                    ))}
+                </div>
               </div>
 
               {/* Metadata */}
