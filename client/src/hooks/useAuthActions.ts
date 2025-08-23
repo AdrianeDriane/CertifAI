@@ -1,18 +1,20 @@
-import { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import type { AxiosError } from 'axios';
-import { getFingerprint } from '../utils/getFingerprint';
-import { useAuth } from '../hooks/useAuth';
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
+import { getFingerprint } from "../utils/getFingerprint";
+import { useAuth } from "../hooks/useAuth";
+import { useToast } from "./useToast";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export function useAuthActions() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [errors, setError] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const { setToken } = useAuth();
+  const { success } = useToast();
 
   const handleRegister = async (
     email: string,
@@ -22,8 +24,8 @@ export function useAuthActions() {
     middleName?: string
   ) => {
     setIsLoading(true);
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
 
     try {
       const fingerprint = await getFingerprint();
@@ -37,9 +39,10 @@ export function useAuthActions() {
       });
 
       setToken(res.data.token);
-      setMessage('Registration successful!');
+      setMessage("Registration successful!");
+      success("Registration successful!");
 
-      navigate('/home', { replace: true });
+      navigate("/home", { replace: true });
       // TODO: Use this when implementing email verification
       // navigate('/verify-email', {
       //   state: { email },
@@ -47,7 +50,7 @@ export function useAuthActions() {
       // });
     } catch (err: unknown) {
       const error = err as AxiosError<{ message?: string }>;
-      setError(error.response?.data?.message || 'Registration failed.');
+      setError(error.response?.data?.message || "Registration failed.");
     } finally {
       setIsLoading(false);
     }
@@ -55,8 +58,8 @@ export function useAuthActions() {
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
 
     try {
       const fingerprint = await getFingerprint();
@@ -67,11 +70,12 @@ export function useAuthActions() {
       });
 
       setToken(res.data.token);
-      setMessage('Login successful!');
-      navigate('/home', { replace: true });
+      setMessage("Login successful!");
+      success("Login successful!");
+      navigate("/home", { replace: true });
     } catch (err: unknown) {
       const error = err as AxiosError<{ message?: string }>;
-      setError(error.response?.data?.message || 'Login failed.');
+      setError(error.response?.data?.message || "Login failed.");
       // TODO: Use this when adding Email Verification
       // if (error.response?.status === 403) {
       //   navigate('/verify-email', { state: { email } });
@@ -83,21 +87,21 @@ export function useAuthActions() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       const fingerprint = await getFingerprint();
       window.location.href = `${API_BASE}/auth/google?fp=${fingerprint}`;
     } catch (err) {
-      console.error('Error getting fingerprint:', err);
-      setError('Failed to initialize Google login');
+      console.error("Error getting fingerprint:", err);
+      setError("Failed to initialize Google login");
       setIsLoading(false);
     }
   };
 
   const clearMessages = () => {
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
   };
 
   return {
@@ -106,7 +110,7 @@ export function useAuthActions() {
     handleGoogleLogin,
     clearMessages,
     isLoading,
-    error,
+    errors,
     message,
   };
 }
