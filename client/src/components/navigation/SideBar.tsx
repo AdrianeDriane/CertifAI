@@ -6,8 +6,11 @@ import {
   FileText,
   LayoutTemplate,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import logoIcon from "../../assets/logoIcon.svg";
 import logoText from "../../assets/logoText.svg";
+import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
 
 interface SidebarProps {
   active: string;
@@ -16,6 +19,41 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ active, setActive }) => {
   const [isOpen, setIsOpen] = useState(true);
+  const { logout } = useAuth();
+  const { success, error } = useToast();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      logout();
+      navigate("/", { replace: true });
+      success("Logged out successfully.");
+    } catch (err) {
+      console.error("Logout error:", err);
+      error("Error logging out.");
+      navigate("/", { replace: true });
+    }
+  };
+
+  // Config-driven menu items
+  const menuItems = [
+    {
+      key: "documents",
+      label: "Documents",
+      icon: <FileText size={20} />,
+      activeColor: "text-[#aa6bfe]",
+      bg: "bg-[#aa6bfe]/10",
+      hover: "hover:bg-[#aa6bfe]/10 hover:text-[#aa6bfe]",
+    },
+    {
+      key: "templates",
+      label: "Templates",
+      icon: <LayoutTemplate size={20} />,
+      activeColor: "text-[#7a9300]",
+      bg: "bg-[#d0f600]/10",
+      hover: "hover:bg-[#d0f600]/10 hover:text-[#7a9300]",
+    },
+  ];
 
   return (
     <div
@@ -56,38 +94,29 @@ const Sidebar: React.FC<SidebarProps> = ({ active, setActive }) => {
       <div className="flex-1 flex flex-col justify-between p-4 relative">
         {/* Menu */}
         <nav className="space-y-3">
-          <button
-            onClick={() => setActive("documents")}
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all
-              ${
-                active === "documents"
-                  ? "bg-[#aa6bfe]/10 text-[#aa6bfe] font-semibold"
-                  : "text-gray-700 hover:bg-[#aa6bfe]/10 hover:text-[#aa6bfe]"
-              } ${isOpen ? "justify-start" : "justify-center"}`}
-          >
-            <FileText size={20} />
-            {isOpen && <span className="text-sm">Documents</span>}
-          </button>
-
-          <button
-            onClick={() => setActive("templates")}
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all
-              ${
-                active === "templates"
-                  ? "bg-[#d0f600]/10 text-[#7a9300] font-semibold"
-                  : "text-gray-700 hover:bg-[#d0f600]/10 hover:text-[#7a9300]"
-              } ${isOpen ? "justify-start" : "justify-center"}`}
-          >
-            <LayoutTemplate size={20} />
-            {isOpen && <span className="text-sm">Templates</span>}
-          </button>
+          {menuItems.map(({ key, label, icon, activeColor, bg, hover }) => (
+            <button
+              key={key}
+              onClick={() => setActive(key)}
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all
+                ${
+                  active === key
+                    ? `${bg} ${activeColor} font-semibold`
+                    : `text-gray-700 ${hover}`
+                }
+                ${isOpen ? "justify-start" : "justify-center"}`}
+            >
+              {icon}
+              {isOpen && <span className="text-sm">{label}</span>}
+            </button>
+          ))}
         </nav>
 
         {/* Logout */}
         <div className="pt-4 border-t border-gray-200">
           {isOpen ? (
             <button
-              onClick={() => alert("Logging out...")}
+              onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 bg-[#000002] text-white 
                          px-6 py-3 rounded-full font-medium hover:bg-opacity-90 transition-all shadow-lg"
             >
@@ -95,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ active, setActive }) => {
             </button>
           ) : (
             <button
-              onClick={() => alert("Logging out...")}
+              onClick={handleLogout}
               className="p-3 rounded-full bg-[#000002] text-white hover:bg-opacity-90 transition shadow-lg"
             >
               <LogOut size={20} />
