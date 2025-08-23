@@ -39,7 +39,7 @@ export const Benefits = () => {
             <div className="absolute top-1/4 -left-8 h-20 w-20 bg-[#d0f600] rounded-full opacity-70 z-0"></div>
             <div className="absolute -bottom-10 right-1/4 h-24 w-24 bg-[#aa6bfe] rounded-full opacity-50 z-0"></div>
           </div>
-          <div className="lg:w-1/2">
+          <div className="lg:w-1/2 text-left">
             <h2 className="text-3xl md:text-4xl font-bold text-[#000002] mb-6">
               Why <span className="text-[#aa6bfe]">CertifAI</span> Matters
             </h2>
