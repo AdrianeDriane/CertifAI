@@ -1,5 +1,8 @@
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 export const CallToAction = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-20 px-6 md:px-12 bg-[#000002] relative overflow-hidden">
       <div className="container mx-auto relative z-10">
@@ -9,15 +12,25 @@ export const CallToAction = () => {
             <span className="text-[#d0f600]">CertifAI</span>?
           </h2>
           <p className="text-xl text-gray-300 mb-10">
-            Join thousands of businesses and professionals who trust CertifAI
-            for their document security and verification needs.
+            CertifAI makes document security and verification simple, reliable,
+            and trusted.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-[#d0f600] text-[#000002] px-8 py-4 rounded-full font-medium hover:bg-opacity-90 transition-all flex items-center justify-center">
+            <button
+              onClick={() => {
+                navigate("/register");
+              }}
+              className="bg-[#d0f600] text-[#000002] px-8 py-4 rounded-full font-medium hover:bg-opacity-90 transition-all flex items-center justify-center"
+            >
               Get Started Now
               <ArrowRight size={18} className="ml-2" />
             </button>
-            <button className="border-2 border-white text-white px-8 py-4 rounded-full font-medium hover:bg-white hover:bg-opacity-10 transition-all">
+            <button
+              onClick={() => {
+                navigate("/register");
+              }}
+              className="border-2 border-white text-white px-8 py-4 rounded-full font-medium hover:bg-white hover:bg-opacity-10 transition-all"
+            >
               Schedule a Demo
             </button>
           </div>

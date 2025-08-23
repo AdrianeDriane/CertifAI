@@ -1,4 +1,5 @@
-import { Twitter, Facebook, Instagram, Linkedin, Mail } from "lucide-react";
+import { Twitter, Facebook, Instagram, Linkedin } from "lucide-react";
+import certifai_logo from "../../../assets/certifai-logo.svg";
 export const Footer = () => {
   return (
     <footer className="bg-[#eeebf0] py-12 px-6 md:px-12">
@@ -6,12 +7,11 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 bg-[#000002] rounded-md flex items-center justify-center">
-                <div className="h-4 w-4 bg-[#d0f600] rounded-sm"></div>
+              <div className="flex items-center gap-2">
+                <img src={certifai_logo} alt="Logo Icon" className="h-10" />
               </div>
-              <span className="text-[#000002] font-bold text-xl">CertifAI</span>
             </div>
-            <p className="text-gray-600 mb-4">
+            <p className="text-left text-gray-600 mb-4">
               AI-powered, blockchain-secured document platform that ensures
               authenticity, trust, and efficiency in digital agreements.
             </p>
@@ -162,17 +162,6 @@ export const Footer = () => {
                 Cookie Policy
               </a>
             </div>
-          </div>
-        </div>
-        <div className="mt-8 flex justify-center">
-          <div className="flex items-center bg-white rounded-full px-4 py-2 shadow-sm">
-            <Mail size={16} className="text-[#aa6bfe] mr-2" />
-            <span className="text-sm text-gray-600">
-              Subscribe to our newsletter
-            </span>
-            <button className="ml-3 bg-[#000002] text-white text-xs px-3 py-1 rounded-full">
-              Subscribe
-            </button>
           </div>
         </div>
       </div>
