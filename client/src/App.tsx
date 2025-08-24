@@ -9,7 +9,6 @@ import { LandingPage } from "./features/landing/pages/LandingPage";
 import Error403Page from "./features/errors/pages/Error403Page";
 import { useToast } from "./hooks/useToast";
 import { ToastContainer } from "./components/Toast";
-import MainLayout from "./layouts/MainLayout";
 import DocumentsPage from "./features/documentEditor/DocumentsPage";
 
 function App() {
@@ -23,27 +22,16 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/403" element={<Error403Page />} />
+        <Route path="/2" element={<Home />} />
 
-        {/* Document Layout with nested routes */}
         <Route
-          path="/"
+          path="/home"
           element={
             <PrivateRoute>
-              <MainLayout />
+              <DocumentsPage />
             </PrivateRoute>
           }
-        >
-          <Route
-            path="/home"
-            element={
-              <PrivateRoute>
-                <DocumentsPage />
-              </PrivateRoute>
-            }
-          />
-
-        </Route>
-
+        />
         <Route
           path="/document-editor/:documentId"
           element={

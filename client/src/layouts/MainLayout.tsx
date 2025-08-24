@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "../components/navigation/sideBar";
+import Sidebar from "../components/navigation/SideBar";
 
 const MainLayout = () => {
   const [active, setActive] = useState("documents");
