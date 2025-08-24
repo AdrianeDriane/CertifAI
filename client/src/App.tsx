@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Register from "./features/auth/pages/Register";
 import Login from "./features/auth/pages/Login";
-import Home from "./features/user/pages/Home";
 import LoginSuccess from "./features/auth/pages/LoginSuccess";
 import { PrivateRoute } from "./components/auth/PrivateRoute";
 import DocumentLayout from "./layouts/DocumentLayout";
@@ -22,7 +21,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/403" element={<Error403Page />} />
-        <Route path="/2" element={<Home />} />
 
         <Route
           path="/home"
