@@ -17,6 +17,7 @@
     "mammoth": "^1.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-loading-indicators": "^1.0.1",
     "react-router-dom": "^7.7.1",
     "react-signature-canvas": "^1.1.0-alpha.2"
   },
