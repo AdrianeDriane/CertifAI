@@ -379,7 +379,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
 
       {/* Edit Confirmation Dialog */}
       {showEditConfirmDialog && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-xl shadow-lg w-[450px] max-w-[95vw]">
             <h3 className="text-lg font-semibold mb-3 text-gray-800">
               Edit Signed Document?
