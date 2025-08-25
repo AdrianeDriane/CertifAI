@@ -1,13 +1,67 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="./src/assets/certifai_tab_logo.svg"
+    />
+    <link rel="apple-touch-icon" href="./src/assets/certifai_tab_logo.png" />
+
+    <!-- Viewport (Mobile Friendly) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+
+    <!-- Primary SEO Meta -->
+    <title>CertifAI - AI-Powered Secure Document Verification</title>
+    <meta
+      name="description"
+      content="CertifAI secures and verifies documents using AI and blockchain, ensuring tamper-proof, instant, and trusted verification."
+    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://certif-ai.vercel.app/" />
+
+    <!-- Open Graph / Facebook / LinkedIn -->
+    <meta
+      property="og:title"
+      content="CertifAI - AI-Powered Secure Document Verification"
+    />
+    <meta
+      property="og:description"
+      content="Verify and protect your documents with AI + blockchain. Trusted, secure, and instant verification."
+    />
+    <meta property="og:image" content="./src/assets/preview-image.png" />
+    <meta property="og:url" content="https://certif-ai.vercel.app/" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="CertifAI - AI-Powered Secure Document Verification"
+    />
+    <meta
+      name="twitter:description"
+      content="Verify and protect your documents with AI + blockchain. Trusted, secure, and instant verification."
+    />
+    <meta name="twitter:image" content="./src/assets/preview-image.png" />
+
+    <!-- Structured Data (JSON-LD for Rich Results) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "CertifAI",
+        "url": "https://certif-ai.vercel.app/",
+        "logo": "./src/assets/certifai_tab_logo.svg"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
