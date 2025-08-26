@@ -66,6 +66,7 @@ We welcome contributions from the community. Please contact any of our developer
 ## 📚 Learn More
 Prefer watching over reading? 📺
 Check out our [video walkthrough](https://drive.google.com/file/d/1_XmIIAAWNJgEpWHADiMiSAOhasa5sUCB/view?usp=sharing) to see CertifAI in action!
+
 Love diving into documentation? 📖
 Explore the complete [project documentation](https://drive.google.com/file/d/1Pucdq-m3AtD5YCKb48cyGaHLaRr7sTuP/view?usp=sharing) for technical details and implementation insights.
 
