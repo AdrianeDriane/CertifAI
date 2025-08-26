@@ -60,7 +60,7 @@ An AI-powered, blockchain-based document management platform that provides secur
 
 ## 🤝 Contributing
 
-We welcome contributions from the community. Please read our contributing guidelines and submit pull requests for any improvements.
+We welcome contributions from the community. Please contact any of our developers and submit pull requests for any improvements.
 
 ## 📚 Learn More
 Prefer watching over reading? 📺
