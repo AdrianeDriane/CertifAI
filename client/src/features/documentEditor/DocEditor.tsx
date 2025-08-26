@@ -1,4 +1,3 @@
-// DocEditor.tsx
 import "../../App.css";
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
@@ -34,6 +33,7 @@ interface DocEditorProps {
   editors?: string[];
   createdBy?: string;
   signedBy?: string[];
+  fetchDocument: () => Promise<void>;
 }
 
 interface SignatureOptions {
@@ -50,6 +50,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
   editors = [],
   createdBy,
   signedBy,
+  fetchDocument,
 }) => {
   const { documentId } = useParams<{ documentId?: string }>();
   const { error } = useToast();
@@ -101,6 +102,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
       editorRef,
       setIsDirty,
       onError: error,
+      fetchDocument,
     });
 
   // Derived state
@@ -180,6 +182,7 @@ const DocEditor: React.FC<DocEditorProps> = ({
         setTimeout(async () => {
           try {
             await saveChangesWithAction("signed");
+            await fetchDocument();
           } catch (err) {
             console.error("Error saving after signature insertion:", err);
           }

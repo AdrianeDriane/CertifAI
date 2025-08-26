@@ -9,6 +9,7 @@ interface UseDocumentActionsProps {
   editorRef: React.RefObject<DocumentEditorContainerComponent | null>;
   setIsDirty: (dirty: boolean) => void;
   onError: (message: string) => void;
+  fetchDocument: () => Promise<void>;
 }
 
 export const useDocumentActions = ({
@@ -16,6 +17,7 @@ export const useDocumentActions = ({
   editorRef,
   setIsDirty,
   onError,
+  fetchDocument,
 }: UseDocumentActionsProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const { success, error } = useToast();
@@ -53,6 +55,7 @@ export const useDocumentActions = ({
         setIsDirty(false);
         console.log(`Document saved successfully with action: ${action}`);
         success("Document saved successfully.");
+        await fetchDocument();
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 403) {
           onError("You are not authorized to edit the document.");

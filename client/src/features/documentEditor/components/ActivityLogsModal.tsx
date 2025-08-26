@@ -1,4 +1,3 @@
-// components/ActivityLogsModal.tsx
 import React from "react";
 import {
   Clock,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DocumentGenerator from "../features/documentGenerator/DocumentGenerator";
 import DocEditor from "../features/documentEditor/DocEditor";
 import { useNavigate, useParams } from "react-router-dom";
@@ -29,42 +29,41 @@ const DocumentLayout = () => {
   const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchDocument = async () => {
-      const token = localStorage.getItem("token");
-      const fingerprint = await getFingerprint();
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              "x-device-fingerprint": fingerprint,
-            },
-          }
-        );
-        const doc: DocumentData = res.data;
-        setDocumentData(doc);
+  const fetchDocument = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const fingerprint = await getFingerprint();
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/documents/${documentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "x-device-fingerprint": fingerprint,
+          },
+        }
+      );
+      const doc: DocumentData = res.data;
+      setDocumentData(doc);
 
-        const latestSfdt = getLatestSfdt(doc);
-        if (latestSfdt) {
-          setSfdtContent(latestSfdt);
-        }
-      } catch (err) {
-        if (axios.isAxiosError(err) && err.response?.status === 403) {
-          navigate("/403");
-        } else if (axios.isAxiosError(err) && err.response?.status === 404) {
-          navigate("/404");
-        } else {
-          console.error("Unexpected error fetching document:", err);
-        }
+      const latestSfdt = getLatestSfdt(doc);
+      if (latestSfdt) {
+        setSfdtContent(latestSfdt);
       }
-    };
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        navigate("/403");
+      } else if (axios.isAxiosError(err) && err.response?.status === 404) {
+        navigate("/404");
+      } else {
+        console.error("Unexpected error fetching document:", err);
+      }
+    }
+  }, [documentId, navigate]);
 
+  useEffect(() => {
     fetchDocument();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchDocument]);
 
   return (
     <div className="h-screen w-full flex flex-col md:flex-row bg-white">
@@ -78,6 +77,7 @@ const DocumentLayout = () => {
           editors={documentData?.editors || []}
           createdBy={documentData?.createdBy}
           signedBy={documentData?.signedBy}
+          fetchDocument={fetchDocument}
         />
       </div>
 
