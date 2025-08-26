@@ -62,7 +62,7 @@ An AI-powered, blockchain-based document management platform that provides secur
 
 We welcome contributions from the community. Please read our contributing guidelines and submit pull requests for any improvements.
 
-📚 Learn More
+## 📚 Learn More
 Prefer watching over reading? 📺
 Check out our [video walkthrough](https://drive.google.com/file/d/1_XmIIAAWNJgEpWHADiMiSAOhasa5sUCB/view?usp=sharing) to see CertifAI in action!
 Love diving into documentation? 📖
