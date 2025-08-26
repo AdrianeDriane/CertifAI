@@ -1,4 +1,5 @@
-# ![CertifAI Logo](./client/src/assets/certifai-logo-with-text-github.png)
+# CertifAI
+![CertifAI Logo](./client/src/assets/certifai-logo-with-text-github.png)
 
 An AI-powered, blockchain-based document management platform that provides secure, legally trustworthy digital workflows for document creation, collaboration, and verification.
 
