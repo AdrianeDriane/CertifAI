@@ -79,7 +79,7 @@ export async function getGroqResponse(
 
   try {
     const response = await groq.chat.completions.create({
-      model: "llama3-70b-8192", // Use more powerful model for complex legal docs
+      model: "meta-llama/llama-4-maverick-17b-128e-instruct", // Use more powerful model for complex legal docs
       messages: [
         {
           role: "system",

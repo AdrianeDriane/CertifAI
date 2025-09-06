@@ -502,7 +502,7 @@ Return ONLY the JSON object, nothing else.
           content: prompt,
         },
       ],
-      model: "llama3-8b-8192", // You can change this to other available models
+      model: "meta-llama/llama-4-maverick-17b-128e-instruct", // You can change this to other available models
       temperature: 0.1, // Low temperature for consistent results
       max_tokens: 1000,
     });
